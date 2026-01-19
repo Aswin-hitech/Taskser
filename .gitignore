@@ -1,0 +1,43 @@
+# Root .gitignore for MERN Stack
+
+# Backend specific
+backend/node_modules/
+backend/.env
+backend/.env.local
+backend/data/
+backend/mongod.log
+backend/npm-debug.log
+backend/logs/
+
+# Frontend specific
+frontend/node_modules/
+frontend/build/
+frontend/npm-debug.log
+frontend/coverage/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# Temporary files
+*.tmp
+*.temp
+.temp/
+
+# DO NOT IGNORE (keep these tracked):
+# frontend/src/assets/     ← Images, icons, fonts
+# frontend/public/         ← Static files
+# backend/config/          ← Configuration (except secrets)
+# package-lock.json        ← Dependency lock files
