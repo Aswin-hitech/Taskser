@@ -46,49 +46,71 @@ TaskFlow is a full-stack task management application built with the MERN stack (
 - **Remember Me**: Option to save login sessions
 - **Account Management**: User profile and preferences
 
-## 🏗️ Project Structure
+## 📂 Project Structure
+
 taskflow-app/
 ├── backend/
-│ ├── config/
-│ │ └── db.js
-│ ├── models/
-│ │ ├── User.js
-│ │ ├── Task.js
-│ │ ├── Note.js
-│ │ ├── Notification.js
-│ │ └── Checklist.js
-│ ├── routes/
-│ │ ├── auth.js
-│ │ ├── tasks.js
-│ │ ├── notes.js
-│ │ ├── notifications.js
-│ │ ├── checklists.js
-│ │ └── stats.js
-│ ├── server.js
-│ ├── package.json
-│ └── .env.example
+│   ├── config/
+│   │   └── db.js
+│   ├── models/
+│   │   ├── User.js
+│   │   ├── Task.js
+│   │   ├── Note.js
+│   │   ├── Notification.js
+│   │   └── Checklist.js
+│   ├── routes/
+│   │   ├── auth.js
+│   │   ├── tasks.js
+│   │   ├── notes.js
+│   │   ├── notifications.js
+│   │   ├── checklists.js
+│   │   └── stats.js
+│   ├── server.js
+│   ├── package.json
+│   └── .env.example
 │
 ├── frontend/
-│ ├── public/
-│ │ ├── index.html
-│ │ └── tones/
-│ │ └── tone1.mp3
-│ ├── src/
-│ │ ├── components/
-│ │ ├── context/
-│ │ ├── pages/
-│ │ ├── utils/
-│ │ ├── App.js
-│ │ ├── index.js
-│ │ └── styles.css
-│ ├── package.json
-│ └── .env.example
+│   ├── public/
+│   │   ├── index.html
+│   │   └── tones/
+│   │       └── tone1.mp3
+│   ├── src/
+│   │   ├── components/
+│   │   │   ├── AddTaskForm.js
+│   │   │   ├── TaskCard.js
+│   │   │   ├── ChecklistCard.js
+│   │   │   ├── Calendar.js
+│   │   │   ├── ProgressMeter.js
+│   │   │   ├── Navbar.js
+│   │   │   ├── HabitGrid.js
+│   │   │   └── (other components)
+│   │   ├── context/
+│   │   │   ├── AuthContext.js
+│   │   │   ├── TaskContext.js
+│   │   │   ├── NoteContext.js
+│   │   │   └── ChecklistContext.js
+│   │   ├── pages/
+│   │   │   ├── Dashboard.js
+│   │   │   ├── Login.js
+│   │   │   ├── Register.js
+│   │   │   ├── Notes.js
+│   │   │   ├── Notifications.js
+│   │   │   ├── CalendarView.js
+│   │   │   ├── Checklists.js
+│   │   │   ├── Settings.js
+│   │   │   └── Profile.js
+│   │   ├── utils/
+│   │   │   ├── notificationEngine.js
+│   │   │   ├── notificationSound.js
+│   │   │   └── streak.js
+│   │   ├── App.js
+│   │   ├── index.js
+│   │   └── styles.css
+│   ├── package.json
+│   └── .env.example
 │
 ├── README.md
 └── LICENSE
-
-
-
 ---
 
 ## 🚀 Features
@@ -202,7 +224,7 @@ This project is licensed under the **MIT License**.
 
 ## 👤 Author
 
-**Aswin**
+**Aswin N**
 
 ---
 
@@ -212,3 +234,4 @@ This project is licensed under the **MIT License**.
 - **Status:** Active Development  
 
 ---
+
