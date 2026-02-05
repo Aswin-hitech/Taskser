@@ -6,7 +6,7 @@ export const TaskContext = createContext();
 
 
 const API = axios.create({
-  baseURL: "http://localhost:5000",
+  baseURL: process.env.REACT_APP_API_URL,
 });
 
 export const TaskProvider = ({ children }) => {
@@ -72,44 +72,44 @@ export const TaskProvider = ({ children }) => {
       console.error("DELETE ERROR:", err.message);
     }
   };
-const checkInHabit = async (id) => {
-  try {
+  const checkInHabit = async (id) => {
+    try {
+      attachToken();
+      const res = await API.post(`/api/tasks/${id}/checkin`);
+      setTasks(prev =>
+        prev.map(t => (t._id === id ? res.data : t))
+      );
+    } catch (err) {
+      console.error("CHECK-IN ERROR:", err.message);
+    }
+  };
+  const resetHabitStreak = async (id) => {
+    try {
+      attachToken();
+      const res = await API.post(`/api/tasks/${id}/reset-streak`);
+      setTasks(prev =>
+        prev.map(t => (t._id === id ? res.data : t))
+      );
+    } catch (err) {
+      console.error("RESET STREAK ERROR:", err.message);
+    }
+  };
+  const moveTask = async (id, direction) => {
     attachToken();
-    const res = await API.post(`/api/tasks/${id}/checkin`);
-    setTasks(prev =>
-      prev.map(t => (t._id === id ? res.data : t))
-    );
-  } catch (err) {
-    console.error("CHECK-IN ERROR:", err.message);
-  }
-};
-const resetHabitStreak = async (id) => {
-  try {
-    attachToken();
-    const res = await API.post(`/api/tasks/${id}/reset-streak`);
-    setTasks(prev =>
-      prev.map(t => (t._id === id ? res.data : t))
-    );
-  } catch (err) {
-    console.error("RESET STREAK ERROR:", err.message);
-  }
-};
-const moveTask = async (id, direction) => {
-  attachToken();
-  await API.put(`/api/tasks/${id}/move`, { direction });
-  fetchTasks();
-};
+    await API.put(`/api/tasks/${id}/move`, { direction });
+    fetchTasks();
+  };
 
 
   return (
     <TaskContext.Provider value={{
-    tasks,
-    addTask,
-    toggleComplete,
-    deleteTask,
-    checkInHabit,
-    resetHabitStreak,
-    moveTask 
+      tasks,
+      addTask,
+      toggleComplete,
+      deleteTask,
+      checkInHabit,
+      resetHabitStreak,
+      moveTask
     }}>
       {children}
     </TaskContext.Provider>

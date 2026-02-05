@@ -71,13 +71,13 @@ export const ChecklistProvider = ({ children }) => {
 
   return (
     <ChecklistContext.Provider
-      value={{ 
-        lists, 
+      value={{
+        lists,
         loading,
-        createList, 
-        updateList, 
+        createList,
+        updateList,
         deleteList,
-        refreshLists: fetchLists 
+        refreshLists: fetchLists
       }}
     >
       {children}

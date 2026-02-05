@@ -3,7 +3,7 @@ import axios from "axios";
 import { jwtDecode } from "jwt-decode";
 
 // Set axios base URL
-axios.defaults.baseURL = process.env.REACT_APP_API_URL || "http://localhost:5000";
+axios.defaults.baseURL = process.env.REACT_APP_API_URL;
 
 export const AuthContext = createContext();
 
