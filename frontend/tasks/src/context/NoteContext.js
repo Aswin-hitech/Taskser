@@ -4,24 +4,16 @@ import { AuthContext } from "./AuthContext";
 
 export const NoteContext = createContext();
 
-const API = axios.create({
-  baseURL: process.env.REACT_APP_API_URL,
-});
+// Use global axios from AuthContext configuration
 
 export const NoteProvider = ({ children }) => {
   const { user, loading } = useContext(AuthContext);
   const [notes, setNotes] = useState([]);
 
-  const attachToken = () => {
-    const token = localStorage.getItem("token");
-    if (token) {
-      API.defaults.headers.common.Authorization = `Bearer ${token}`;
-    }
-  };
+
 
   useEffect(() => {
     if (!loading && user) {
-      attachToken();
       fetchNotes();
     } else {
       setNotes([]);
@@ -30,8 +22,7 @@ export const NoteProvider = ({ children }) => {
 
   const fetchNotes = async () => {
     try {
-      attachToken();
-      const res = await API.get("/api/notes");
+      const res = await axios.get("/api/notes");
       setNotes(res.data);
     } catch (err) {
       console.error("FETCH NOTES ERROR:", err.message);
@@ -40,8 +31,7 @@ export const NoteProvider = ({ children }) => {
 
   const addNote = async ({ title, content }) => {
     try {
-      attachToken();
-      const res = await API.post("/api/notes", { title, content });
+      const res = await axios.post("/api/notes", { title, content });
       setNotes(prev => [res.data, ...prev]);
     } catch (err) {
       console.error("ADD NOTE ERROR:", err.message);
@@ -51,8 +41,7 @@ export const NoteProvider = ({ children }) => {
 
   const updateNote = async (id, title, content) => {
     try {
-      attachToken();
-      const res = await API.put(`/api/notes/${id}`, { title, content });
+      const res = await axios.put(`/api/notes/${id}`, { title, content });
       setNotes(prev =>
         prev.map(n => (n._id === id ? res.data : n))
       );
@@ -64,8 +53,7 @@ export const NoteProvider = ({ children }) => {
 
   const deleteNote = async (id) => {
     try {
-      attachToken();
-      await API.delete(`/api/notes/${id}`);
+      await axios.delete(`/api/notes/${id}`);
       setNotes(prev => prev.filter(n => n._id !== id));
     } catch (err) {
       console.error("DELETE NOTE ERROR:", err.message);

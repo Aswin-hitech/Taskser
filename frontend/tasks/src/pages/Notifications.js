@@ -13,10 +13,7 @@ export default function Notifications() {
 
   const fetchNotifications = async () => {
     try {
-      const token = localStorage.getItem("token") || sessionStorage.getItem("token");
-      const res = await axios.get("/api/notifications", {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const res = await axios.get("/api/notifications");
       setNotifications(res.data);
       setSelectedNotifications([]);
       setSelectAll(false);
@@ -29,10 +26,7 @@ export default function Notifications() {
 
   const markAsViewed = async (id) => {
     try {
-      const token = localStorage.getItem("token") || sessionStorage.getItem("token");
-      await axios.put(`/api/notifications/${id}/view`, {}, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      await axios.put(`/api/notifications/${id}/view`, {});
       setNotifications((prev) =>
         prev.map((n) =>
           n._id === id ? { ...n, viewed: true } : n
@@ -45,11 +39,8 @@ export default function Notifications() {
 
   const markAllAsRead = async () => {
     try {
-      const token = localStorage.getItem("token") || sessionStorage.getItem("token");
-      await axios.put("/api/notifications/mark-all-read", {}, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      
+      await axios.put("/api/notifications/mark-all-read", {});
+
       // Update local state
       setNotifications((prev) =>
         prev.map((n) => ({ ...n, viewed: true }))
@@ -65,12 +56,9 @@ export default function Notifications() {
     if (!window.confirm("Are you sure you want to delete this notification?")) {
       return;
     }
-    
+
     try {
-      const token = localStorage.getItem("token") || sessionStorage.getItem("token");
-      await axios.delete(`/api/notifications/${id}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      await axios.delete(`/api/notifications/${id}`);
       setNotifications((prev) => prev.filter((n) => n._id !== id));
       setSelectedNotifications((prev) => prev.filter((selectedId) => selectedId !== id));
     } catch (err) {
@@ -83,20 +71,18 @@ export default function Notifications() {
       alert("Please select notifications to delete");
       return;
     }
-    
+
     if (!window.confirm(`Are you sure you want to delete ${selectedNotifications.length} notification(s)?`)) {
       return;
     }
-    
+
     try {
-      const token = localStorage.getItem("token") || sessionStorage.getItem("token");
       await axios.delete("/api/notifications", {
-        headers: { Authorization: `Bearer ${token}` },
         data: { ids: selectedNotifications }
       });
-      
+
       // Remove deleted notifications from state
-      setNotifications((prev) => 
+      setNotifications((prev) =>
         prev.filter((n) => !selectedNotifications.includes(n._id))
       );
       setSelectedNotifications([]);
@@ -132,33 +118,33 @@ export default function Notifications() {
   return (
     <div className="page-container">
       <h1>Notifications</h1>
-      
+
       {/* Notification Controls */}
       <div className="notification-controls-bar">
         <div className="notification-stats">
           <span className="total-count">Total: {notifications.length}</span>
           <span className="unread-count">Unread: {getUnreadCount()}</span>
         </div>
-        
+
         <div className="notification-actions">
-          <button 
-            onClick={markAllAsRead} 
+          <button
+            onClick={markAllAsRead}
             className="action-btn mark-all-read"
             disabled={getUnreadCount() === 0}
           >
             Mark All as Read
           </button>
-          
-          <button 
-            onClick={deleteSelectedNotifications} 
+
+          <button
+            onClick={deleteSelectedNotifications}
             className="action-btn delete-selected danger"
             disabled={selectedNotifications.length === 0}
           >
             Delete Selected ({selectedNotifications.length})
           </button>
-          
-          <button 
-            onClick={handleSelectAll} 
+
+          <button
+            onClick={handleSelectAll}
             className="action-btn select-all"
           >
             {selectAll ? "Deselect All" : "Select All"}
@@ -181,9 +167,8 @@ export default function Notifications() {
           {notifications.map((notif) => (
             <div
               key={notif._id}
-              className={`notification-item ${notif.viewed ? "read" : "unread"} ${
-                selectedNotifications.includes(notif._id) ? "selected" : ""
-              }`}
+              className={`notification-item ${notif.viewed ? "read" : "unread"} ${selectedNotifications.includes(notif._id) ? "selected" : ""
+                }`}
             >
               <div className="notification-checkbox">
                 <input
@@ -192,8 +177,8 @@ export default function Notifications() {
                   onChange={() => handleSelectNotification(notif._id)}
                 />
               </div>
-              
-              <div 
+
+              <div
                 className="notification-content"
                 onClick={() => !notif.viewed && markAsViewed(notif._id)}
               >
@@ -203,17 +188,17 @@ export default function Notifications() {
                   </strong>
                   {!notif.viewed && <span className="unread-badge">NEW</span>}
                 </div>
-                
+
                 <p className="notification-message">{notif.message}</p>
-                
+
                 <div className="notification-footer">
                   <small className="notification-time">
                     {new Date(notif.createdAt).toLocaleString()}
                   </small>
-                  
+
                   <div className="notification-item-actions">
                     {!notif.viewed && (
-                      <button 
+                      <button
                         onClick={(e) => {
                           e.stopPropagation();
                           markAsViewed(notif._id);
@@ -223,8 +208,8 @@ export default function Notifications() {
                         Mark as Read
                       </button>
                     )}
-                    
-                    <button 
+
+                    <button
                       onClick={(e) => {
                         e.stopPropagation();
                         deleteNotification(notif._id);

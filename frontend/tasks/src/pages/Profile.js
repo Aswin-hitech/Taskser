@@ -20,8 +20,6 @@ export default function Profile() {
   useEffect(() => {
     const fetchProfileAndStats = async () => {
       try {
-        const token = localStorage.getItem("token");
-
         // Fetch user statistics
         const profileRes = await axios.get("/api/auth/me");
         const statsRes = await axios.get("/api/stats");

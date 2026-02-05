@@ -4,16 +4,16 @@ import { jwtDecode } from "jwt-decode";
 
 // Set axios base URL
 axios.defaults.baseURL = process.env.REACT_APP_API_URL;
-axios.interceptors.request.use((config) => {
-  const token =
-    localStorage.getItem("token") ||
-    sessionStorage.getItem("token");
 
+// Request interceptor to add token
+axios.interceptors.request.use((config) => {
+  const token = localStorage.getItem("token") || sessionStorage.getItem("token");
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
-
   return config;
+}, (error) => {
+  return Promise.reject(error);
 });
 
 export const AuthContext = createContext();
@@ -28,15 +28,6 @@ export const AuthProvider = ({ children }) => {
     return localStorage.getItem("token") || sessionStorage.getItem("token");
   };
 
-  // Function to set axios default headers
-  const setAuthToken = (token) => {
-    if (token) {
-      axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
-    } else {
-      delete axios.defaults.headers.common["Authorization"];
-    }
-  };
-
   useEffect(() => {
     const initializeAuth = async () => {
       const token = getToken();
@@ -47,7 +38,6 @@ export const AuthProvider = ({ children }) => {
 
           // Check if token is expired
           if (decoded.exp * 1000 > Date.now()) {
-            setAuthToken(token);
             setUser({ id: decoded.id, username: decoded.username });
           } else {
             // Token expired, clear it
@@ -81,7 +71,6 @@ export const AuthProvider = ({ children }) => {
         sessionStorage.setItem("token", token);
       }
 
-      setAuthToken(token);
       const decoded = jwtDecode(token);
       setUser({ id: decoded.id, username: decoded.username });
 
@@ -115,7 +104,6 @@ export const AuthProvider = ({ children }) => {
   const clearAuth = () => {
     localStorage.removeItem("token");
     sessionStorage.removeItem("token");
-    setAuthToken(null);
     setUser(null);
   };
 
