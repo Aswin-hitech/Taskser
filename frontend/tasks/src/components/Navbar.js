@@ -54,6 +54,7 @@ export default function Navbar() {
         <div className="mobile-menu">
           <NavLink to="/dashboard" className={linkClass} onClick={() => setMenuOpen(false)}>Tasks</NavLink>
           <NavLink to="/calendar" className={linkClass} onClick={() => setMenuOpen(false)}>Calendar</NavLink>
+          <NavLink to="/checklists" className={linkClass} onClick={() => setMenuOpen(false)}>Checklists</NavLink>
           <NavLink to="/notes" className={linkClass} onClick={() => setMenuOpen(false)}>Notes</NavLink>
           <NavLink to="/notifications" className={linkClass} onClick={() => setMenuOpen(false)}>Notifications</NavLink>
           <NavLink to="/settings" className={linkClass} onClick={() => setMenuOpen(false)}>Settings</NavLink>
