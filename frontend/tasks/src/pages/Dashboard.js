@@ -1,6 +1,7 @@
 import { useContext, useEffect, useState } from "react";
 import { TaskContext } from "../context/TaskContext";
 import { NoteContext } from "../context/NoteContext";
+import { AuthContext } from "../context/AuthContext";
 import AddTaskForm from "../components/AddTaskForm";
 import TaskCard from "../components/TaskCard";
 import ProgressMeter from "../components/ProgressMeter";
@@ -14,6 +15,8 @@ export default function Dashboard() {
     checkInHabit,
     resetHabitStreak,
   } = useContext(TaskContext);
+
+  const { loading } = useContext(AuthContext);
 
   const { notes } = useContext(NoteContext);
   const [localTasks, setLocalTasks] = useState([]);
@@ -122,7 +125,11 @@ export default function Dashboard() {
         <h2>
           <span className="icon">📋</span>
           Your Tasks
-          <span className="task-count"> :  {localTasks.length}</span>
+          {loading ? (
+            <span className="task-count"> (Loading...)</span>
+          ) : (
+            <span className="task-count"> :  {localTasks.length}</span>
+          )}
         </h2>
 
         {localTasks.length === 0 ? (
