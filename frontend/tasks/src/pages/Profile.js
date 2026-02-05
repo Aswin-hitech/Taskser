@@ -21,16 +21,11 @@ export default function Profile() {
     const fetchProfileAndStats = async () => {
       try {
         const token = localStorage.getItem("token");
-        
-        // Fetch profile data
-        const profileRes = await axios.get("/api/auth/me", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        
+
         // Fetch user statistics
-        const statsRes = await axios.get("/api/stats", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        const profileRes = await axios.get("/api/auth/me");
+        const statsRes = await axios.get("/api/stats");
+
 
         setProfileData(profileRes.data);
         setStats(statsRes.data);
@@ -42,17 +37,17 @@ export default function Profile() {
         setLoading(false);
       }
     };
-    
+
     fetchProfileAndStats();
   }, []);
 
   // Format time for digital clock
   const formatTime = (date) => {
-    return date.toLocaleTimeString([], { 
-      hour: '2-digit', 
+    return date.toLocaleTimeString([], {
+      hour: '2-digit',
       minute: '2-digit',
       second: '2-digit',
-      hour12: true 
+      hour12: true
     });
   };
 
@@ -116,7 +111,7 @@ export default function Profile() {
             </p>
           </div>
         </div>
-        
+
         <div className="profile-details">
           <div className="detail-item">
             <span className="detail-label">User ID</span>
@@ -133,7 +128,7 @@ export default function Profile() {
       {stats && (
         <div className="stats-section">
           <h3 className="section-title">Your Activity</h3>
-          
+
           <div className="stats-grid">
             <div className="stat-card">
               <div className="stat-icon">📋</div>
@@ -142,7 +137,7 @@ export default function Profile() {
                 <div className="stat-label">Total Tasks</div>
               </div>
             </div>
-            
+
             <div className="stat-card">
               <div className="stat-icon">✅</div>
               <div className="stat-content">
@@ -150,7 +145,7 @@ export default function Profile() {
                 <div className="stat-label">Completed</div>
               </div>
             </div>
-            
+
             <div className="stat-card">
               <div className="stat-icon">📝</div>
               <div className="stat-content">
@@ -158,7 +153,7 @@ export default function Profile() {
                 <div className="stat-label">Notes</div>
               </div>
             </div>
-            
+
             <div className="stat-card">
               <div className="stat-icon">📅</div>
               <div className="stat-content">
@@ -181,7 +176,7 @@ export default function Profile() {
               <span className="activity-time">Just now</span>
             </div>
           </div>
-          
+
           <div className="activity-item">
             <div className="activity-icon">📱</div>
             <div className="activity-content">
@@ -200,12 +195,12 @@ export default function Profile() {
             <span className="action-icon">⚙️</span>
             <span className="action-text">Settings</span>
           </button>
-          
+
           <button className="action-btn" onClick={() => window.location.href = '/dashboard'}>
             <span className="action-icon">📊</span>
             <span className="action-text">Dashboard</span>
           </button>
-          
+
           <button className="action-btn" onClick={() => window.location.href = '/tasks'}>
             <span className="action-icon">➕</span>
             <span className="action-text">New Task</span>

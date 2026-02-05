@@ -23,7 +23,7 @@ export default function Navbar() {
   return (
     <nav className="navbar">
       {/* Brand */}
-      <div className="navbar-brand">TaskFlow</div>
+      <div className="navbar-brand">TASKSER</div>
 
       {/* Desktop Links */}
       <div className="navbar-links desktop-only">

@@ -5,7 +5,7 @@ export default function Settings() {
   const [rememberMe, setRememberMe] = useState(
     localStorage.getItem("rememberMe") === "true"
   );
-  
+
   const [soundSettings, setSoundSettings] = useState({
     enabled: true,
     volume: 0.5,
@@ -58,7 +58,7 @@ export default function Settings() {
     <div className="page-container">
       <h1>Settings</h1>
 
-      <div className="soft-card wide-section">
+      <div className="card settings-section">
         <h3>Appearance</h3>
         <label className="settings-option">
           <input type="radio" defaultChecked /> Dark (current)
@@ -74,16 +74,16 @@ export default function Settings() {
         </label>
       </div>
 
-      <div className="soft-card wide-section">
+      <div className="card settings-section">
         <h3>Notifications</h3>
         <label className="settings-option">
           <input type="checkbox" defaultChecked /> Browser notifications
         </label>
-        
+
         {/* Sound Settings */}
         <div className="sound-settings">
           <h4>Notification Sound</h4>
-          
+
           <div className="sound-toggle">
             <label className="settings-option">
               <input
@@ -93,16 +93,16 @@ export default function Settings() {
               />
               Enable notification sound
             </label>
-            
-            <button 
-              onClick={testSound} 
+
+            <button
+              onClick={testSound}
               className="test-sound-btn"
               disabled={!soundSettings.enabled}
             >
               Test Sound
             </button>
           </div>
-          
+
           <div className="volume-control">
             <label>Volume: {Math.round(soundSettings.volume * 100)}%</label>
             <input
@@ -121,13 +121,13 @@ export default function Settings() {
             </div>
           </div>
         </div>
-        
+
         <label className="settings-option">
           <input type="checkbox" defaultChecked /> Show overdue tasks in red
         </label>
       </div>
 
-      <div className="soft-card wide-section">
+      <div className="card settings-section">
         <h3>Notification Sound Tone</h3>
         <select defaultValue="tone1" className="tone-selector">
           <option value="tone1">Default Tone</option>
@@ -140,7 +140,7 @@ export default function Settings() {
         </p>
       </div>
 
-      <div className="soft-card wide-section">
+      <div className="card settings-section">
         <h3>Account</h3>
         <button className="danger">Delete Account</button>
         <p>This action cannot be undone.</p>

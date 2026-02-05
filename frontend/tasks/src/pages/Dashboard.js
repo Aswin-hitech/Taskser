@@ -97,28 +97,34 @@ export default function Dashboard() {
           </div>
         </div>
       </div>
-     {/* Notification Status */}
+      {/* Notification Status */}
       {!notificationEnabled && (
         <div className="notification-warning">
           <p>
-            🔔 Notifications are disabled. Enable them in your browser settings 
+            🔔 Notifications are disabled. Enable them in your browser settings
             to receive task reminders.
           </p>
         </div>
       )}
 
       {/* Progress Meter + Add Task Form Row */}
-      <ProgressMeter percentage={percentage} />
-      <AddTaskForm />
+      <div className="dashboard-grid">
+        <div className="col-half">
+          <ProgressMeter percentage={percentage} />
+        </div>
+        <div className="col-half">
+          <AddTaskForm />
+        </div>
+      </div>
 
       {/* Tasks Section */}
-      <div className={`section tasks ${isDragging ? 'dragging-active' : ''}`}>
+      <div className={`section tasks col-full ${isDragging ? 'dragging-active' : ''}`}>
         <h2>
           <span className="icon">📋</span>
-          Your Tasks   
+          Your Tasks
           <span className="task-count"> :  {localTasks.length}</span>
         </h2>
-        
+
         {localTasks.length === 0 ? (
           <div className="empty-state">
             <span className="empty-icon">✨</span>
@@ -152,7 +158,7 @@ export default function Dashboard() {
           <span className="icon">📝</span>
           Recent Notes
         </h2>
-        
+
         {notes.length === 0 ? (
           <div className="empty-state">
             <span className="empty-icon">📄</span>

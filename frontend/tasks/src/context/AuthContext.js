@@ -4,6 +4,17 @@ import { jwtDecode } from "jwt-decode";
 
 // Set axios base URL
 axios.defaults.baseURL = process.env.REACT_APP_API_URL;
+axios.interceptors.request.use((config) => {
+  const token =
+    localStorage.getItem("token") ||
+    sessionStorage.getItem("token");
+
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+
+  return config;
+});
 
 export const AuthContext = createContext();
 
@@ -29,11 +40,11 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     const initializeAuth = async () => {
       const token = getToken();
-      
+
       if (token) {
         try {
           const decoded = jwtDecode(token);
-          
+
           // Check if token is expired
           if (decoded.exp * 1000 > Date.now()) {
             setAuthToken(token);
@@ -47,7 +58,7 @@ export const AuthProvider = ({ children }) => {
           clearAuth();
         }
       }
-      
+
       setAuthChecked(true);
       setLoading(false);
     };
@@ -63,23 +74,23 @@ export const AuthProvider = ({ children }) => {
       });
 
       const token = res.data.token;
-      
+
       if (rememberMe) {
         localStorage.setItem("token", token);
       } else {
         sessionStorage.setItem("token", token);
       }
-      
+
       setAuthToken(token);
       const decoded = jwtDecode(token);
       setUser({ id: decoded.id, username: decoded.username });
-      
+
       return { success: true };
     } catch (error) {
       console.error("Login error:", error);
-      return { 
-        success: false, 
-        message: error.response?.data?.message || "Login failed" 
+      return {
+        success: false,
+        message: error.response?.data?.message || "Login failed"
       };
     }
   };
@@ -90,9 +101,9 @@ export const AuthProvider = ({ children }) => {
       return { success: true };
     } catch (error) {
       console.error("Register error:", error);
-      return { 
-        success: false, 
-        message: error.response?.data?.message || "Registration failed" 
+      return {
+        success: false,
+        message: error.response?.data?.message || "Registration failed"
       };
     }
   };
@@ -111,7 +122,7 @@ export const AuthProvider = ({ children }) => {
   const isAuthenticated = () => {
     const token = getToken();
     if (!token) return false;
-    
+
     try {
       const decoded = jwtDecode(token);
       return decoded.exp * 1000 > Date.now();
@@ -126,12 +137,12 @@ export const AuthProvider = ({ children }) => {
 
   return (
     <AuthContext.Provider
-      value={{ 
-        user, 
-        loading, 
+      value={{
+        user,
+        loading,
         authChecked,
-        login, 
-        register, 
+        login,
+        register,
         logout,
         isAuthenticated,
         getAuthToken
