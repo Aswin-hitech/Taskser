@@ -281,8 +281,10 @@ button:not(.secondary):not(.danger):not(.icon-btn) {
 }
 
 button:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(0, 204, 255, 0.4);
+  transform: scale(1.05) translateY(-2px);
+  /* Cool scale effect */
+  box-shadow: 0 0 20px rgba(0, 204, 255, 0.6);
+  /* Stronger glow */
 }
 
 /* Secondary Button (Glass) */
@@ -293,8 +295,9 @@ button.secondary {
 }
 
 button.secondary:hover {
-  background: rgba(255, 255, 255, 0.15);
-  border-color: rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.2);
+  border-color: #00ccff;
+  box-shadow: 0 0 15px rgba(0, 204, 255, 0.3);
 }
 
 /* Danger Button */
@@ -462,7 +465,9 @@ label {
    Calendar
    ========================================= */
 .calendar-wrapper {
-  max-width: 800px;
+  max-width: 1200px;
+  /* Increased size for desktop */
+  width: 95%;
   margin: 0 auto;
 }
 
