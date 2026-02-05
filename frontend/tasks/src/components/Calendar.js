@@ -37,6 +37,14 @@ export default function Calendar() {
     }
   };
 
+  // Helper to format date as YYYY-MM-DD in local time
+  const formatLocalYYYYMMDD = (date) => {
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, "0");
+    const d = String(date.getDate()).padStart(2, "0");
+    return `${y}-${m}-${d}`;
+  };
+
   const hasTaskOnDate = (dateStr) =>
     scheduledTasks.some(t =>
       new Date(t.date).toISOString().split("T")[0] === dateStr
@@ -55,7 +63,7 @@ export default function Calendar() {
     setSelectedDate(null);
   };
 
-  const todayStr = new Date().toISOString().split("T")[0];
+  const todayStr = formatLocalYYYYMMDD(new Date());
 
   return (
     <div className="page-container">
@@ -81,9 +89,7 @@ export default function Calendar() {
           ))}
 
           {Array(daysInMonth).fill(null).map((_, i) => {
-            const dateStr = new Date(year, month, i + 1)
-              .toISOString()
-              .split("T")[0];
+            const dateStr = formatLocalYYYYMMDD(new Date(year, month, i + 1));
 
             return (
               <div
