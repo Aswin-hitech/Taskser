@@ -35,9 +35,3 @@ desktop.ini
 *.tmp
 *.temp
 .temp/
-
-# DO NOT IGNORE (keep these tracked):
-# frontend/src/assets/     ← Images, icons, fonts
-# frontend/public/         ← Static files
-# backend/config/          ← Configuration (except secrets)
-# package-lock.json        ← Dependency lock files
