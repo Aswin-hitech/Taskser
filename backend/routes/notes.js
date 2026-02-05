@@ -3,7 +3,7 @@ const jwt = require("jsonwebtoken");
 const Note = require("../models/Note");
 
 const router = express.Router();
-const JWT_SECRET = "mysecretkey";
+const JWT_SECRET = process.env.JWT_SECRET;
 
 const protect = (req, res, next) => {
   const authHeader = req.headers.authorization;

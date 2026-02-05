@@ -3,7 +3,7 @@ const jwt = require("jsonwebtoken");
 const Notification = require("../models/Notification");
 
 const router = express.Router();
-const JWT_SECRET = "mysecretkey";
+const JWT_SECRET = process.env.JWT_SECRET;
 
 // Debug middleware
 router.use((req, res, next) => {
@@ -38,7 +38,7 @@ const getUserId = (req) => {
 router.get("/", async (req, res) => {
   console.log("[NOTIFICATIONS] GET / called");
   const userId = getUserId(req);
-  
+
   if (!userId) {
     console.log("[NOTIFICATIONS] Unauthorized - no user ID");
     return res.status(401).json({ message: "Unauthorized" });
@@ -47,7 +47,7 @@ router.get("/", async (req, res) => {
   try {
     const notifications = await Notification.find({ user: userId })
       .sort({ createdAt: -1 });
-    
+
     console.log(`[NOTIFICATIONS] Found ${notifications.length} notifications for user ${userId}`);
     res.json(notifications);
   } catch (err) {
@@ -60,7 +60,7 @@ router.get("/", async (req, res) => {
 router.post("/", async (req, res) => {
   console.log("[NOTIFICATIONS] POST / called with body:", req.body);
   const userId = getUserId(req);
-  
+
   if (!userId) {
     console.log("[NOTIFICATIONS] Unauthorized for POST");
     return res.status(401).json({ message: "Unauthorized" });
@@ -108,7 +108,7 @@ router.post("/", async (req, res) => {
 router.put("/:id/view", async (req, res) => {
   console.log(`[NOTIFICATIONS] PUT /${req.params.id}/view called`);
   const userId = getUserId(req);
-  
+
   if (!userId) {
     return res.status(401).json({ message: "Unauthorized" });
   }
@@ -139,7 +139,7 @@ router.put("/:id/view", async (req, res) => {
 router.put("/mark-all-read", async (req, res) => {
   console.log("[NOTIFICATIONS] PUT /mark-all-read called");
   const userId = getUserId(req);
-  
+
   if (!userId) {
     return res.status(401).json({ message: "Unauthorized" });
   }
@@ -151,10 +151,10 @@ router.put("/mark-all-read", async (req, res) => {
     );
 
     console.log(`[NOTIFICATIONS] Marked ${result.modifiedCount} notifications as read`);
-    res.json({ 
-      success: true, 
+    res.json({
+      success: true,
       message: `Marked ${result.modifiedCount} notifications as read`,
-      modifiedCount: result.modifiedCount 
+      modifiedCount: result.modifiedCount
     });
   } catch (err) {
     console.error("[NOTIFICATIONS] Error marking all as read:", err);
@@ -166,7 +166,7 @@ router.put("/mark-all-read", async (req, res) => {
 router.delete("/:id", async (req, res) => {
   console.log(`[NOTIFICATIONS] DELETE /${req.params.id} called`);
   const userId = getUserId(req);
-  
+
   if (!userId) {
     return res.status(401).json({ message: "Unauthorized" });
   }
@@ -183,9 +183,9 @@ router.delete("/:id", async (req, res) => {
     }
 
     console.log("[NOTIFICATIONS] Deleted:", notif._id);
-    res.json({ 
-      success: true, 
-      message: "Notification deleted successfully" 
+    res.json({
+      success: true,
+      message: "Notification deleted successfully"
     });
   } catch (err) {
     console.error("[NOTIFICATIONS] Error deleting:", err);
@@ -197,13 +197,13 @@ router.delete("/:id", async (req, res) => {
 router.delete("/", async (req, res) => {
   console.log("[NOTIFICATIONS] DELETE / (multiple) called with body:", req.body);
   const userId = getUserId(req);
-  
+
   if (!userId) {
     return res.status(401).json({ message: "Unauthorized" });
   }
 
   const { ids } = req.body;
-  
+
   if (!ids || !Array.isArray(ids) || ids.length === 0) {
     return res.status(400).json({ message: "No notification IDs provided" });
   }
@@ -215,10 +215,10 @@ router.delete("/", async (req, res) => {
     });
 
     console.log(`[NOTIFICATIONS] Deleted ${result.deletedCount} notifications`);
-    res.json({ 
-      success: true, 
+    res.json({
+      success: true,
       message: `Deleted ${result.deletedCount} notifications`,
-      deletedCount: result.deletedCount 
+      deletedCount: result.deletedCount
     });
   } catch (err) {
     console.error("[NOTIFICATIONS] Error deleting multiple:", err);
@@ -230,7 +230,7 @@ router.delete("/", async (req, res) => {
 router.delete("/clear-all", async (req, res) => {
   console.log("[NOTIFICATIONS] DELETE /clear-all called");
   const userId = getUserId(req);
-  
+
   if (!userId) {
     return res.status(401).json({ message: "Unauthorized" });
   }
@@ -239,10 +239,10 @@ router.delete("/clear-all", async (req, res) => {
     const result = await Notification.deleteMany({ user: userId });
 
     console.log(`[NOTIFICATIONS] Cleared all ${result.deletedCount} notifications`);
-    res.json({ 
-      success: true, 
+    res.json({
+      success: true,
       message: `Cleared all ${result.deletedCount} notifications`,
-      deletedCount: result.deletedCount 
+      deletedCount: result.deletedCount
     });
   } catch (err) {
     console.error("[NOTIFICATIONS] Error clearing all:", err);

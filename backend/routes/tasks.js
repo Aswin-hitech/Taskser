@@ -3,7 +3,7 @@ const jwt = require("jsonwebtoken");
 const Task = require("../models/Task");
 
 const router = express.Router();
-const JWT_SECRET = "mysecretkey"; // keep SAME everywhere
+const JWT_SECRET = process.env.JWT_SECRET; // keep SAME everywhere
 
 // ==========================
 // AUTH MIDDLEWARE
