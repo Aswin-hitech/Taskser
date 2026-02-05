@@ -17,31 +17,39 @@ export default function AddTaskForm() {
   const [reminder, setReminder] = useState(false);
   const [reminderTime, setReminderTime] = useState("");
 
+  // Loading state for task creation
+  const [isAdding, setIsAdding] = useState(false);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!description.trim()) return;
 
-    await addTask({
-      description,
-      type,
+    setIsAdding(true);
+    try {
+      await addTask({
+        description,
+        type,
 
-      // Scheduled task data
-      date: type === "scheduled" && hasDate ? date : undefined,
-      time: type === "scheduled" && hasTime ? time : undefined, // ADD THIS
+        // Scheduled task data
+        date: type === "scheduled" && hasDate ? date : undefined,
+        time: type === "scheduled" && hasTime ? time : undefined,
 
-      // Daily habit reminder
-      reminder: type === "daily" ? reminder : false,
-      reminderTime: type === "daily" && reminder ? reminderTime : undefined,
-    });
+        // Daily habit reminder
+        reminder: type === "daily" ? reminder : false,
+        reminderTime: type === "daily" && reminder ? reminderTime : undefined,
+      });
 
-    // Reset form
-    setDescription("");
-    setHasDate(false);
-    setDate("");
-    setHasTime(false);
-    setTime("");
-    setReminder(false);
-    setReminderTime("");
+      // Reset form
+      setDescription("");
+      setHasDate(false);
+      setDate("");
+      setHasTime(false);
+      setTime("");
+      setReminder(false);
+      setReminderTime("");
+    } finally {
+      setIsAdding(false);
+    }
   };
 
   return (

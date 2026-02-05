@@ -13,22 +13,20 @@ export default function Login() {
   const navigate = useNavigate();
 
   const [isLoggingIn, setIsLoggingIn] = useState(false);
-  const [error, setError] = useState("");
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError("");
     setIsLoggingIn(true);
     try {
       const result = await login(username, password, rememberMe);
-      if (result.success) {
-        navigate("/dashboard");
+      if (result && !result.success) {
+        alert(result.message || "Login failed");
+        setIsLoggingIn(false);
       } else {
-        setError(result.message || "Login failed");
+        navigate("/dashboard");
       }
-    } catch (err) {
-      setError("An unexpected error occurred");
-    } finally {
+    } catch (error) {
+      alert("Login failed");
       setIsLoggingIn(false);
     }
   };
@@ -39,7 +37,6 @@ export default function Login() {
         <div className="auth-header">
           <h2 className="auth-title">TASKSER</h2>
           <h4 className="auth-subtitle">Your Personal Task Scheduler</h4>
-          {error && <div className="auth-error" style={{ color: 'red', marginTop: '10px' }}>{error}</div>}
         </div>
         <form onSubmit={handleSubmit}>
           <input
