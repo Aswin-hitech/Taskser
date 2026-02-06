@@ -347,6 +347,14 @@ textarea:focus {
   box-shadow: 0 0 0 3px rgba(0, 204, 255, 0.15);
 }
 
+/* Textarea specific styling */
+textarea {
+  min-height: 140px;
+  /* 40% larger for better note-taking */
+  resize: vertical;
+  /* Allow vertical resizing only */
+}
+
 label {
   display: block;
   margin-bottom: 8px;
