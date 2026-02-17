@@ -1,19 +1,23 @@
-if (process.env.NODE_ENV !== "production") {
-  require("dotenv").config();
-}
+const config = require("./config/env");
 
 const express = require("express");
 const cors = require("cors");
-const { validateConfig } = require("./config/jwt");
 
-// Perform startup validation for JWT secrets
-try {
-  validateConfig();
-} catch (error) {
-  console.error("STARTUP ERROR:", error.message);
-  if (process.env.NODE_ENV === "production") {
-    process.exit(1);
-  }
+// --- Deployment Helper & Startup Validation ---
+const diag = config.getDiagnostics();
+console.log("-----------------------------------------");
+console.log(`🚀 Startup Environment: ${diag.environment}`);
+console.log(`📡 Port: ${diag.port}`);
+console.log(`🔑 Secrets Loaded: ${diag.secretsLoaded ? "YES" : "NO"}`);
+console.log(`📂 Source: ${diag.source}`);
+if (diag.missing.length > 0) {
+  console.warn(`⚠️  Missing: ${diag.missing.join(", ")}`);
+}
+console.log("-----------------------------------------");
+
+if (!config.isValid && config.isProduction) {
+  console.error("❌ FATAL: JWT Secrets missing in production. Shutting down.");
+  process.exit(1);
 }
 
 const cookieparser = require("cookie-parser");
@@ -32,9 +36,8 @@ const app = express();
 connectDB();
 
 // ✅ CORS Configuration for Cross-Origin Deployment
-const allowedOrigin = process.env.FRONTEND_URL || "http://localhost:5000";
 app.use(cors({
-  origin: allowedOrigin,
+  origin: config.frontendUrl,
   credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"]
