@@ -1,7 +1,20 @@
-require("dotenv").config();   // ✅ MUST be first line
+if (process.env.NODE_ENV !== "production") {
+  require("dotenv").config();
+}
 
 const express = require("express");
 const cors = require("cors");
+const { validateConfig } = require("./config/jwt");
+
+// Perform startup validation for JWT secrets
+try {
+  validateConfig();
+} catch (error) {
+  console.error("STARTUP ERROR:", error.message);
+  if (process.env.NODE_ENV === "production") {
+    process.exit(1);
+  }
+}
 
 const cookieparser = require("cookie-parser");
 const noteRoutes = require("./routes/notes");
