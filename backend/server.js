@@ -3,7 +3,6 @@ require("dotenv").config();   // ✅ MUST be first line
 const express = require("express");
 const cors = require("cors");
 
-const cookieparser = require("cookie-parser");
 const noteRoutes = require("./routes/notes");
 const authRoutes = require("./routes/auth");
 const taskRoutes = require("./routes/tasks");
@@ -25,7 +24,6 @@ app.use(cors({
 }));
 
 app.use(express.json());
-app.use(cookieparser());
 
 // ✅ Routes
 app.use("/api/auth", authRoutes);

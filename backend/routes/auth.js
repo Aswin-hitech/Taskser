@@ -4,25 +4,6 @@ const User = require("../models/User");
 const jwt = require("jsonwebtoken");
 
 const JWT_SECRET = process.env.JWT_SECRET;
-const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET;
-
-
-// Helper to generate tokens
-const generateTokens = (user) => {
-  const accessToken = jwt.sign(
-    { id: user._id, username: user.username },
-    JWT_SECRET,
-    { expiresIn: "15m" } // Short-lived access token
-  );
-
-  const refreshToken = jwt.sign(
-    { id: user._id, username: user.username },
-    JWT_REFRESH_SECRET,
-    { expiresIn: "7d" } // Long-lived refresh token
-  );
-
-  return { accessToken, refreshToken };
-};
 
 
 // REGISTER
@@ -38,21 +19,14 @@ router.post("/register", async (req, res) => {
     const user = new User({ username, password });
     await user.save();
 
-    const { accessToken, refreshToken } = generateTokens(user);
+    // Issue single long-lived token
+    const token = jwt.sign(
+      { id: user._id, username: user.username },
+      JWT_SECRET,
+      { expiresIn: "30d" }
+    );
 
-    // Save refresh token to DB
-    user.refreshTokens.push(refreshToken);
-    await user.save();
-
-    // Send Refresh Token as HTTP-Only Cookie
-    res.cookie("refreshToken", refreshToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production", // Secure in production
-      sameSite: "strict",
-      maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
-    });
-
-    res.status(201).json({ message: "User registered successfully", accessToken });
+    res.status(201).json({ message: "User registered successfully", token });
   } catch (err) {
     console.error("Register error:", err.message);
     res.status(500).json({ message: "Registration failed" });
@@ -75,100 +49,18 @@ router.post("/login", async (req, res) => {
       return res.status(401).json({ message: "Invalid credentials" });
     }
 
-    const { accessToken, refreshToken } = generateTokens(user);
+    // Issue single long-lived token
+    const token = jwt.sign(
+      { id: user._id, username: user.username },
+      JWT_SECRET,
+      { expiresIn: "30d" }
+    );
 
-    // Save refresh token to DB
-    user.refreshTokens.push(refreshToken);
-    await user.save();
-
-    // Send Refresh Token as HTTP-Only Cookie
-    res.cookie("refreshToken", refreshToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
-      maxAge: 7 * 24 * 60 * 60 * 1000
-    });
-
-    res.json({ accessToken });
+    res.json({ token });
   } catch (err) {
     console.error("Login error:", err.message);
     res.status(500).json({ message: "Login failed" });
   }
-});
-
-
-// REFRESH TOKEN
-router.post("/refresh", async (req, res) => {
-  const refreshToken = req.cookies.refreshToken;
-
-  if (!refreshToken) {
-    return res.status(401).json({ message: "No refresh token" });
-  }
-
-  // Verify token
-  jwt.verify(refreshToken, JWT_REFRESH_SECRET, async (err, decoded) => {
-    if (err) return res.status(403).json({ message: "Invalid refresh token" });
-
-    try {
-      const user = await User.findById(decoded.id);
-      if (!user) return res.status(404).json({ message: "User not found" });
-
-      // Check if refresh token is in DB (allow revocation)
-      if (!user.refreshTokens.includes(refreshToken)) {
-        // Potential reuse detection: Logout user fully
-        user.refreshTokens = [];
-        await user.save();
-        return res.status(403).json({ message: "Invalid refresh token (reuse detected)" });
-      }
-
-      // Rotate tokens (optional security: issue new refresh token each time)
-      // For now, identifying reuse requires implementing detection logic.
-      // Simple strategy: Just issue new access token.
-
-      const accessToken = jwt.sign(
-        { id: user._id, username: user.username },
-        JWT_SECRET,
-        { expiresIn: "15m" }
-      );
-
-      res.json({ accessToken });
-    } catch (error) {
-      console.error("Refresh error", error);
-      res.status(500).send("Internal server error");
-    }
-  });
-});
-
-
-// LOGOUT
-router.post("/logout", async (req, res) => {
-  const refreshToken = req.cookies.refreshToken;
-
-  if (refreshToken) {
-    try {
-      // Decode (ignoring expiration) to find user
-      const decoded = jwt.decode(refreshToken);
-      if (decoded) {
-        const user = await User.findById(decoded.id);
-        if (user) {
-          // Remove this specific token
-          user.refreshTokens = user.refreshTokens.filter(t => t !== refreshToken);
-          await user.save();
-        }
-      }
-    } catch (err) {
-      console.error("Logout error", err);
-    }
-  }
-
-  // Clear cookie
-  res.clearCookie("refreshToken", {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "strict"
-  });
-
-  res.json({ message: "Logged out successfully" });
 });
 
 
@@ -196,5 +88,11 @@ router.get("/me", async (req, res) => {
     res.status(401).json({ message: "Invalid token" });
   }
 });
+
+// LOGOUT (Client-side mainly, but provided for completeness)
+router.post("/logout", (req, res) => {
+  res.json({ message: "Logged out successfully" });
+});
+
 
 module.exports = router;
