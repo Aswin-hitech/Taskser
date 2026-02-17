@@ -41,29 +41,16 @@ self.addEventListener("activate", (evt) => {
 
 // Fetch Event
 self.addEventListener("fetch", (evt) => {
-    // 1. DONT cache API calls to /api/auth (except loading check maybe, but safe to exclude)
+    // 1. DONT intercept or cache API calls to /api/auth
     if (evt.request.url.includes("/api/auth")) {
-        return; // Administer network only
+        // Return fetch with credentials: "include" to ensure cookies are sent
+        evt.respondWith(fetch(evt.request, { credentials: "include" }));
+        return;
     }
 
-    // 2. Handle API requests (Network First, then Cache)
+    // 2. Handle other API requests (Network Only for data to avoid stale user data)
     if (evt.request.url.includes("/api/")) {
-        evt.respondWith(
-            caches.open(DATA_CACHE_NAME).then((cache) => {
-                return fetch(evt.request)
-                    .then((response) => {
-                        // Clone and stash
-                        if (response.status === 200) {
-                            cache.put(evt.request.url, response.clone());
-                        }
-                        return response;
-                    })
-                    .catch((err) => {
-                        // Network failed, try cache
-                        return cache.match(evt.request);
-                    });
-            })
-        );
+        evt.respondWith(fetch(evt.request, { credentials: "include" }));
         return;
     }
 

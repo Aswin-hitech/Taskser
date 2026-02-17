@@ -4,6 +4,7 @@ import { jwtDecode } from "jwt-decode";
 
 // Set axios base URL
 axios.defaults.baseURL = process.env.REACT_APP_API_URL;
+axios.defaults.withCredentials = true; // IMPORTANT for cross-origin cookies
 
 export const AuthContext = createContext();
 
@@ -17,7 +18,7 @@ export const AuthProvider = ({ children }) => {
     const initializeAuth = async () => {
       try {
         // Attempt to refresh token to get initial session
-        // This validates the HTTP-Only cookie
+        // This validates the HTTP-Only cookie (credentials: include)
         const res = await axios.post("/api/auth/refresh");
         const { accessToken } = res.data;
 
@@ -26,7 +27,7 @@ export const AuthProvider = ({ children }) => {
         setUser({ id: decoded.id, username: decoded.username });
       } catch (error) {
         // No valid session (cookie missing or expired)
-        console.log("No active session found.");
+        console.log("No active session found during bootstrap.");
         setUser(null);
         setAccessToken(null);
       } finally {
