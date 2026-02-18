@@ -21,22 +21,21 @@ export default function Profile() {
   useEffect(() => {
     const fetchProfileAndStats = async () => {
       try {
-        // Fetch user statistics
-        const profileRes = await axios.get("/api/auth/me");
-        const statsRes = await axios.get("/api/stats");
+        const profileRes = await api.get("/api/auth/me");
+        if (profileRes.data.success) {
+          setProfileData(profileRes.data.user);
+        }
 
-
-        setProfileData(profileRes.data);
-        setStats(statsRes.data);
+        const statsRes = await api.get("/api/stats");
+        if (statsRes.data.success) {
+          setStats(statsRes.data.stats);
+        }
       } catch (error) {
-        console.error("Failed to load profile:", error);
-        setProfileData(null);
-        setStats(null);
+        console.error("Failed to load profile or stats:", error);
       } finally {
         setLoading(false);
       }
     };
-
     fetchProfileAndStats();
   }, []);
 

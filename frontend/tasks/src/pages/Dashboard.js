@@ -14,6 +14,7 @@ export default function Dashboard() {
     deleteTask,
     checkInHabit,
     resetHabitStreak,
+    updateBulkPriority
   } = useContext(TaskContext);
 
   const { loading } = useContext(AuthContext);
@@ -25,7 +26,9 @@ export default function Dashboard() {
   const [notificationEnabled, setNotificationEnabled] = useState(false);
 
   useEffect(() => {
-    setLocalTasks(tasks);
+    // Sort tasks by priority if they exist, otherwise use default order
+    const sortedTasks = [...tasks].sort((a, b) => (a.priority || 0) - (b.priority || 0));
+    setLocalTasks(sortedTasks);
   }, [tasks]);
 
   // Request notification permission on mount
@@ -75,9 +78,17 @@ export default function Dashboard() {
     setLocalTasks(updated);
   };
 
-  const handleDragEnd = () => {
+  const handleDragEnd = async () => {
     setDragIndex(null);
     setIsDragging(false);
+
+    // Persist new order
+    const priorities = localTasks.map((task, index) => ({
+      id: task._id,
+      priority: index
+    }));
+
+    await updateBulkPriority(priorities);
   };
 
   return (

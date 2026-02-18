@@ -14,23 +14,47 @@ export const NoteProvider = ({ children }) => {
   }, [user, loading]);
 
   const fetchNotes = async () => {
-    const res = await api.get("/api/notes");
-    setNotes(res.data);
+    try {
+      const res = await api.get("/api/notes");
+      if (res.data.success) {
+        setNotes(res.data.notes);
+      }
+    } catch (err) {
+      console.error("FETCH NOTES ERROR:", err.message);
+    }
   };
 
   const addNote = async ({ title, content }) => {
-    const res = await api.post("/api/notes", { title, content });
-    setNotes(prev => [res.data, ...prev]);
+    try {
+      const res = await api.post("/api/notes", { title, content });
+      if (res.data.success) {
+        setNotes(prev => [res.data.note, ...prev]);
+      }
+    } catch (err) {
+      console.error("ADD NOTE ERROR:", err.message);
+    }
   };
 
   const updateNote = async (id, title, content) => {
-    const res = await api.put(`/api/notes/${id}`, { title, content });
-    setNotes(prev => prev.map(n => n._id === id ? res.data : n));
+    try {
+      const res = await api.put(`/api/notes/${id}`, { title, content });
+      if (res.data.success) {
+        setNotes(prev => prev.map(n => n._id === id ? res.data.note : n));
+      }
+    } catch (err) {
+      console.error("UPDATE NOTE ERROR:", err.message);
+    }
   };
 
   const deleteNote = async (id) => {
-    await api.delete(`/api/notes/${id}`);
-    setNotes(prev => prev.filter(n => n._id !== id));
+    try {
+      const res = await api.delete(`/api/notes/${id}`);
+      if (res.data.success) {
+        setNotes(prev => prev.filter(n => n._id !== id));
+      }
+    } catch (err) {
+      console.error("DELETE NOTE ERROR:", err.message);
+    }
   };
 
   return (

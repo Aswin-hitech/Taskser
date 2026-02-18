@@ -1,73 +1,50 @@
 const express = require("express");
-const jwt = require("jsonwebtoken");
 const Task = require("../models/Task");
 const Note = require("../models/Note");
 const Checklist = require("../models/CheckList");
+const protect = require("../middleware/protect");
 
 const router = express.Router();
-const config = require("../config/env");
-const JWT_SECRET = config.accessSecret;
 
-const getUserId = (req) => {
-  const authHeader = req.headers.authorization;
-  if (!authHeader) return null;
-
-  const token = authHeader.split(" ")[1];
-  if (!token) return null;
-
-  try {
-    const decoded = jwt.verify(token, JWT_SECRET);
-    return decoded.id;
-  } catch {
-    return null;
-  }
-};
-
-router.get("/", async (req, res) => {
-  const userId = getUserId(req);
-
-  if (!userId) {
-    return res.status(401).json({ message: "Unauthorized" });
-  }
-
+router.get("/", protect, async (req, res) => {
   try {
     // Get task statistics
-    const tasks = await Task.find({ user: userId });
+    const tasks = await Task.find({ user: req.userId });
     const totalTasks = tasks.length;
     const completedTasks = tasks.filter(task => task.completed).length;
 
     // Get notes count
-    const notes = await Note.find({ user: userId });
-    const totalNotes = notes.length;
+    const notesCount = await Note.countDocuments({ user: req.userId });
 
-    // Calculate active streak (simplified - you can enhance this)
+    // Calculate active streak
     const dailyTasks = tasks.filter(task => task.type === "daily");
     let activeStreak = 0;
 
-    // Simple streak calculation (you can improve this)
     if (dailyTasks.length > 0) {
       const today = new Date().toISOString().split('T')[0];
       const hasTaskToday = dailyTasks.some(task =>
         task.habitLogs && task.habitLogs.includes(today)
       );
-      activeStreak = hasTaskToday ? 1 : 0;
+      activeStreak = hasTaskToday ? 1 : 0; // Simplified
     }
 
     // Get checklists count
-    const checklists = await Checklist.find({ user: userId });
-    const totalChecklists = checklists.length;
+    const checklistsCount = await Checklist.countDocuments({ user: req.userId });
 
     res.json({
-      totalTasks,
-      completedTasks,
-      totalNotes,
-      totalChecklists,
-      activeStreak,
-      completionRate: totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0
+      success: true,
+      stats: {
+        totalTasks,
+        completedTasks,
+        totalNotes: notesCount,
+        totalChecklists: checklistsCount,
+        activeStreak,
+        completionRate: totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0
+      }
     });
   } catch (err) {
-    console.error("Error fetching stats:", err);
-    res.status(500).json({ message: "Server error" });
+    console.error("[STATS ERROR]", err);
+    res.status(500).json({ success: false, message: "Server error" });
   }
 });
 

@@ -1,112 +1,48 @@
 import { createContext, useState, useEffect } from "react";
-import axios from "axios";
+import api from "./api";
 import { jwtDecode } from "jwt-decode";
-
-// Set axios base URL
-axios.defaults.baseURL = process.env.REACT_APP_API_URL;
-axios.defaults.withCredentials = true; // IMPORTANT for cross-origin cookies
 
 export const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true); // App Bootstrap Loading State
-  const [accessToken, setAccessToken] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  // Bootstrap: Check session on mount
   useEffect(() => {
     const initializeAuth = async () => {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        setLoading(false);
+        return;
+      }
+
       try {
-        // Attempt to refresh token to get initial session
-        // This validates the HTTP-Only cookie (credentials: include)
-        const res = await axios.post("/api/auth/refresh", {}, { withCredentials: true });
-
-        const { accessToken } = res.data;
-
-        setAccessToken(accessToken);
-        const decoded = jwtDecode(accessToken);
-        setUser({ id: decoded.id, username: decoded.username });
+        const res = await api.get("/api/auth/me");
+        if (res.data.success) {
+          setUser(res.data.user);
+        }
       } catch (error) {
-        // No valid session (cookie missing or expired)
-        console.log("No active session found during bootstrap.");
+        console.log("[AUTH] Initial session check failed.");
         setUser(null);
-        setAccessToken(null);
       } finally {
-        setLoading(false); // Bootstrap complete
+        setLoading(false);
       }
     };
 
     initializeAuth();
   }, []);
 
-  // Axios Interceptors
-  useEffect(() => {
-    // Request Interceptor: Attach Access Token
-    const requestInterceptor = axios.interceptors.request.use(
-      (config) => {
-        if (accessToken) {
-          config.headers.Authorization = `Bearer ${accessToken}`;
-        }
-        return config;
-      },
-      (error) => Promise.reject(error)
-    );
-
-    // Response Interceptor: Handle 401 (Silent Refresh)
-    const responseInterceptor = axios.interceptors.response.use(
-      (response) => response,
-      async (error) => {
-        const originalRequest = error.config;
-
-        // If 401 and not already retrying
-        if (error.response?.status === 401 && !originalRequest._retry) {
-          originalRequest._retry = true;
-
-          try {
-            // Attempt silent refresh
-            const res = await axios.post("/api/auth/refresh");
-            const { accessToken: newAccessToken } = res.data;
-
-            setAccessToken(newAccessToken);
-
-            // Retry original request with new token
-            originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
-            return axios(originalRequest);
-          } catch (refreshError) {
-            // Refresh failed (cookie expired/invalid) -> Logout
-            console.error("Session expired:", refreshError);
-            logout(); // Clear state
-            return Promise.reject(refreshError);
-          }
-        }
-        return Promise.reject(error);
-      }
-    );
-
-    return () => {
-      axios.interceptors.request.eject(requestInterceptor);
-      axios.interceptors.response.eject(responseInterceptor);
-    };
-  }, [accessToken]);
-
-
   const login = async (username, password) => {
     try {
-      // Login sets HTTP-Only cookie and returns Access Token
-      const res = await axios.post("/api/auth/login", {
-        username,
-        password,
-      });
-
+      const res = await api.post("/api/auth/login", { username, password });
       const { accessToken } = res.data;
-      setAccessToken(accessToken);
 
+      localStorage.setItem("token", accessToken);
       const decoded = jwtDecode(accessToken);
       setUser({ id: decoded.id, username: decoded.username });
 
       return { success: true };
     } catch (error) {
-      console.error("Login error:", error);
       return {
         success: false,
         message: error.response?.data?.message || "Login failed"
@@ -114,20 +50,17 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-
   const register = async (username, password) => {
     try {
-      const res = await axios.post("/api/auth/register", { username, password });
-
+      const res = await api.post("/api/auth/register", { username, password });
       const { accessToken } = res.data;
-      setAccessToken(accessToken);
 
+      localStorage.setItem("token", accessToken);
       const decoded = jwtDecode(accessToken);
       setUser({ id: decoded.id, username: decoded.username });
 
       return { success: true };
     } catch (error) {
-      console.error("Register error:", error);
       return {
         success: false,
         message: error.response?.data?.message || "Registration failed"
@@ -135,15 +68,15 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-
   const logout = async () => {
     try {
-      await axios.post("/api/auth/logout");
+      await api.post("/api/auth/logout");
     } catch (err) {
       console.error("Logout failed", err);
+    } finally {
+      localStorage.removeItem("token");
+      setUser(null);
     }
-    setAccessToken(null);
-    setUser(null);
   };
 
   return (
