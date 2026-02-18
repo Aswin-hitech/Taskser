@@ -1,4 +1,5 @@
 import axios from "axios";
+import { jwtDecode } from "jwt-decode";
 
 // Create axios instance
 const api = axios.create({
@@ -13,7 +14,7 @@ api.interceptors.request.use(
     if (token) {
       // Check if token is expired
       try {
-        const payload = JSON.parse(atob(token.split('.')[1]));
+        const payload = jwtDecode(token);
         if (payload.exp * 1000 > Date.now()) {
           config.headers.Authorization = `Bearer ${token}`;
         } else {

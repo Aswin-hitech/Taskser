@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
-import { useAuth } from "../context/AuthContext"; // Assuming you have this hook
+import { useAuth } from "../context/AuthContext";
+
 
 export default function Profile() {
   const [profileData, setProfileData] = useState(null);

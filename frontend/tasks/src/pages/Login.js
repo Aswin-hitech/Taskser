@@ -18,7 +18,7 @@ export default function Login() {
     e.preventDefault();
     setIsLoggingIn(true);
     try {
-      const result = await login(username, password, rememberMe);
+const result = await login(username, password);
       if (result && !result.success) {
         alert(result.message || "Login failed");
         setIsLoggingIn(false);

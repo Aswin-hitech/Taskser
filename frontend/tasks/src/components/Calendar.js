@@ -45,10 +45,11 @@ export default function Calendar() {
     return `${y}-${m}-${d}`;
   };
 
-  const hasTaskOnDate = (dateStr) =>
-    scheduledTasks.some(t =>
-      new Date(t.date).toISOString().split("T")[0] === dateStr
-    );
+const hasTaskOnDate = (dateStr) =>
+  scheduledTasks.some(t =>
+    formatLocalYYYYMMDD(new Date(t.date)) === dateStr
+  );
+
 
   const handleAddTask = async () => {
     if (!taskText.trim()) return;

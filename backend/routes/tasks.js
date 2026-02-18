@@ -4,7 +4,7 @@ const Task = require("../models/Task");
 
 const router = express.Router();
 const config = require("../config/env");
-const JWT_SECRET = config.accessSecret; // keep SAME everywhere
+const JWT_SECRET = config.accessSecret;
 
 // ==========================
 // AUTH MIDDLEWARE
@@ -35,7 +35,6 @@ router.get("/", protect, async (req, res) => {
       .sort({ createdAt: -1 });
     res.json(tasks);
   } catch (err) {
-    console.error("FETCH TASKS ERROR:", err);
     res.status(500).json({ msg: err.message });
   }
 });
@@ -62,12 +61,8 @@ router.post("/", protect, async (req, res) => {
       user: req.userId,
       description,
       type,
-
-      // scheduled
       date: type === "scheduled" ? date : undefined,
       time: type === "scheduled" ? time : undefined,
-
-      // daily habit reminder
       reminder: type === "daily" ? reminder : false,
       reminderTime: type === "daily" ? reminderTime : undefined,
     });
@@ -75,13 +70,12 @@ router.post("/", protect, async (req, res) => {
     await task.save();
     res.status(201).json(task);
   } catch (err) {
-    console.error("CREATE TASK ERROR:", err);
     res.status(400).json({ msg: err.message });
   }
 });
 
 // ==========================
-// TOGGLE COMPLETION (SCHEDULED ONLY)
+// TOGGLE COMPLETION
 // ==========================
 router.put("/:id", protect, async (req, res) => {
   try {
@@ -100,13 +94,12 @@ router.put("/:id", protect, async (req, res) => {
 
     res.json(task);
   } catch (err) {
-    console.error("UPDATE TASK ERROR:", err);
     res.status(500).json({ msg: err.message });
   }
 });
 
 // ==========================
-// DAILY HABIT CHECK-IN (STREAK)
+// DAILY HABIT CHECK-IN
 // ==========================
 router.post("/:id/checkin", protect, async (req, res) => {
   try {
@@ -129,30 +122,12 @@ router.post("/:id/checkin", protect, async (req, res) => {
 
     res.json(task);
   } catch (err) {
-    console.error("CHECK-IN ERROR:", err);
     res.status(500).json({ msg: err.message });
   }
 });
 
-router.delete("/:id", protect, async (req, res) => {
-  try {
-    const task = await Task.findOneAndDelete({
-      _id: req.params.id,
-      user: req.userId,
-    });
-
-    if (!task) {
-      return res.status(404).json({ msg: "Task not found" });
-    }
-
-    res.json({ msg: "Task removed" });
-  } catch (err) {
-    console.error("DELETE TASK ERROR:", err);
-    res.status(500).json({ msg: err.message });
-  }
-});
 // ==========================
-// RESET DAILY HABIT STREAK
+// RESET STREAK
 // ==========================
 router.post("/:id/reset-streak", protect, async (req, res) => {
   try {
@@ -171,44 +146,21 @@ router.post("/:id/reset-streak", protect, async (req, res) => {
 
     res.json(task);
   } catch (err) {
-    console.error("RESET STREAK ERROR:", err);
     res.status(500).json({ msg: err.message });
   }
 });
-router.put("/:id/move", protect, async (req, res) => {
-  const { direction } = req.body;
 
-  const task = await Task.findOne({
-    _id: req.params.id,
-    user: req.userId,
-  });
+router.delete("/:id", protect, async (req, res) => {
+  try {
+    await Task.findOneAndDelete({
+      _id: req.params.id,
+      user: req.userId,
+    });
 
-  if (!task) return res.status(404).json({ message: "Task not found" });
-
-  task.priority += direction === "up" ? -1 : 1;
-  await task.save();
-
-  res.json(task);
-});
-
-router.post("/:id/checkin", protect, async (req, res) => {
-  const today = new Date().toISOString().split("T")[0];
-
-  const task = await Task.findOne({
-    _id: req.params.id,
-    user: req.userId,
-    type: "daily",
-  });
-
-  if (!task) return res.status(404).json({ message: "Habit not found" });
-
-  if (!task.habitLogs.includes(today)) {
-    task.habitLogs.push(today);
-    await task.save();
+    res.json({ msg: "Task removed" });
+  } catch (err) {
+    res.status(500).json({ msg: err.message });
   }
-
-  res.json(task);
 });
-
 
 module.exports = router;
