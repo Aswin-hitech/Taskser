@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import axios from "axios";
+import api from "../context/api";
 
 export default function Notifications() {
   const [notifications, setNotifications] = useState([]);
@@ -13,8 +13,10 @@ export default function Notifications() {
 
   const fetchNotifications = async () => {
     try {
-      const res = await axios.get("/api/notifications");
-      setNotifications(res.data);
+      const res = await api.get("/api/notifications");
+      if (res.data.success) {
+        setNotifications(res.data.notifications);
+      }
       setSelectedNotifications([]);
       setSelectAll(false);
     } catch (err) {
@@ -26,12 +28,14 @@ export default function Notifications() {
 
   const markAsViewed = async (id) => {
     try {
-      await axios.put(`/api/notifications/${id}/view`, {});
-      setNotifications((prev) =>
-        prev.map((n) =>
-          n._id === id ? { ...n, viewed: true } : n
-        )
-      );
+      const res = await api.put(`/api/notifications/${id}/view`, {});
+      if (res.data.success) {
+        setNotifications((prev) =>
+          prev.map((n) =>
+            n._id === id ? res.data.notification : n
+          )
+        );
+      }
     } catch (err) {
       console.error("Failed to mark viewed", err);
     }
@@ -39,14 +43,14 @@ export default function Notifications() {
 
   const markAllAsRead = async () => {
     try {
-      await axios.put("/api/notifications/mark-all-read", {});
-
-      // Update local state
-      setNotifications((prev) =>
-        prev.map((n) => ({ ...n, viewed: true }))
-      );
-      setSelectedNotifications([]);
-      setSelectAll(false);
+      const res = await api.put("/api/notifications/mark-all-read", {});
+      if (res.data.success) {
+        setNotifications((prev) =>
+          prev.map((n) => ({ ...n, viewed: true }))
+        );
+        setSelectedNotifications([]);
+        setSelectAll(false);
+      }
     } catch (err) {
       console.error("Failed to mark all as read", err);
     }
@@ -58,9 +62,11 @@ export default function Notifications() {
     }
 
     try {
-      await axios.delete(`/api/notifications/${id}`);
-      setNotifications((prev) => prev.filter((n) => n._id !== id));
-      setSelectedNotifications((prev) => prev.filter((selectedId) => selectedId !== id));
+      const res = await api.delete(`/api/notifications/${id}`);
+      if (res.data.success) {
+        setNotifications((prev) => prev.filter((n) => n._id !== id));
+        setSelectedNotifications((prev) => prev.filter((selectedId) => selectedId !== id));
+      }
     } catch (err) {
       console.error("Failed to delete notification", err);
     }
@@ -77,11 +83,18 @@ export default function Notifications() {
     }
 
     try {
-      await axios.delete("/api/notifications", {
-        data: { ids: selectedNotifications }
-      });
+      // Backend clear-all endpoint doesn't take IDs currently. 
+      // Wait, there was a deleteMany in the original route.
+      // My refactored route had clear-all. I should add a bulk delete route or use loop.
+      // Actually, I refactored the backend to have delete /clear-all.
+      // I'll update the backend to support bulk delete if I missed it.
 
-      // Remove deleted notifications from state
+      // For now, let's assume we use the bulk delete if implemented or use a loop.
+      // Wait, I saw deleteMany in notifications.js (backend) before my refactor.
+      // Let's check my refactored backend/routes/notifications.js
+
+      await Promise.all(selectedNotifications.map(id => api.delete(`/api/notifications/${id}`)));
+
       setNotifications((prev) =>
         prev.filter((n) => !selectedNotifications.includes(n._id))
       );
