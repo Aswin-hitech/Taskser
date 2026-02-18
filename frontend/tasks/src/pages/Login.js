@@ -71,7 +71,7 @@ export default function Login() {
           </label>
 
           <button type="submit" className="auth-button" disabled={isLoggingIn}>
-            {isLoggingIn ? "Waiting to let you log in..." : "Login"}
+          {isLoggingIn ? "Checking credentials..." : "Login"}
           </button>
         </form>
         <br></br>

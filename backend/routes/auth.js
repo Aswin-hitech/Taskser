@@ -46,7 +46,7 @@ router.post("/login", async (req, res) => {
   try {
     const { username, password } = req.body;
 
-    const user = await User.findOne({ username });
+    const user = await User.findOne({ username }).select("+password");
     if (!user) {
       return res.status(401).json({ message: "Invalid credentials" });
     }
@@ -55,6 +55,7 @@ router.post("/login", async (req, res) => {
     if (!isMatch) {
       return res.status(401).json({ message: "Invalid credentials" });
     }
+
 
     const accessToken = generateAccessToken(user);
     const refreshToken = generateRefreshToken(user);
