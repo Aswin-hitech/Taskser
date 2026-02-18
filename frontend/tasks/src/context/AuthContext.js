@@ -19,7 +19,8 @@ export const AuthProvider = ({ children }) => {
       try {
         // Attempt to refresh token to get initial session
         // This validates the HTTP-Only cookie (credentials: include)
-        const res = await axios.post("/api/auth/refresh");
+const res = await axios.post("/api/auth/refresh", {}, { withCredentials: true });
+
         const { accessToken } = res.data;
 
         setAccessToken(accessToken);

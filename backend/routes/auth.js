@@ -24,13 +24,14 @@ router.post("/register", async (req, res) => {
     }
 
     // Send Refresh Token as HTTP-Only Cookie
-    res.cookie("refreshToken", refreshToken, {
-      httpOnly: true,
-      secure: true,
-      sameSite: "none",
-      maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
-      path: "/"
-    });
+res.cookie("refreshToken", refreshToken, {
+  httpOnly: true,
+  secure: process.env.NODE_ENV === "production",
+  sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+  maxAge: 30 * 24 * 60 * 60 * 1000,
+  path: "/"
+});
+
 
     res.status(201).json({ message: "User registered successfully", accessToken });
   } catch (err) {
@@ -63,13 +64,14 @@ router.post("/login", async (req, res) => {
     }
 
     // Send Refresh Token as HTTP-Only Cookie
-    res.cookie("refreshToken", refreshToken, {
-      httpOnly: true,
-      secure: true,
-      sameSite: "none",
-      maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
-      path: "/"
-    });
+res.cookie("refreshToken", refreshToken, {
+  httpOnly: true,
+  secure: process.env.NODE_ENV === "production",
+  sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+  maxAge: 30 * 24 * 60 * 60 * 1000,
+  path: "/"
+});
+
 
     res.json({ accessToken });
   } catch (err) {
