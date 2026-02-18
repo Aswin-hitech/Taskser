@@ -3,7 +3,8 @@ const jwt = require("jsonwebtoken");
 const Checklist = require("../models/CheckList");
 
 const router = express.Router();
-const JWT_SECRET = process.env.JWT_SECRET;
+const config = require("../config/env");
+const JWT_SECRET = config.accessSecret;
 
 const getUserId = (req) => {
   const auth = req.headers.authorization;

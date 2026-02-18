@@ -4,7 +4,7 @@ import { jwtDecode } from "jwt-decode";
 
 // Set axios base URL
 axios.defaults.baseURL = process.env.REACT_APP_API_URL;
-axios.defaults.withCredentials = true; // IMPORTANT for cross-origin cookies
+axios.defaults.withCredentials = true;
 
 export const AuthContext = createContext();
 
@@ -19,7 +19,7 @@ export const AuthProvider = ({ children }) => {
       try {
         // Attempt to refresh token to get initial session
         // This validates the HTTP-Only cookie (credentials: include)
-const res = await axios.post("/api/auth/refresh", {}, { withCredentials: true });
+        const res = await axios.post("/api/auth/refresh", {}, { withCredentials: true });
 
         const { accessToken } = res.data;
 
@@ -64,7 +64,11 @@ const res = await axios.post("/api/auth/refresh", {}, { withCredentials: true })
 
           try {
             // Attempt silent refresh
-            const res = await axios.post("/api/auth/refresh");
+            const res = await axios.post(
+              "/api/auth/refresh",
+              {},
+              { withCredentials: true }
+            );
             const { accessToken: newAccessToken } = res.data;
 
             setAccessToken(newAccessToken);
