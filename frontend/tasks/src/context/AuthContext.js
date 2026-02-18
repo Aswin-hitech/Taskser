@@ -4,59 +4,104 @@ import { jwtDecode } from "jwt-decode";
 
 // Set axios base URL
 axios.defaults.baseURL = process.env.REACT_APP_API_URL;
+axios.defaults.withCredentials = true; // IMPORTANT for cross-origin cookies
 
 export const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(true); // App Bootstrap Loading State
+  const [accessToken, setAccessToken] = useState(null);
 
-  // Initialize auth state from localStorage
+  // Bootstrap: Check session on mount
   useEffect(() => {
-    const initializeAuth = () => {
-      const token = localStorage.getItem("token");
+    const initializeAuth = async () => {
+      try {
+        // Attempt to refresh token to get initial session
+        // This validates the HTTP-Only cookie (credentials: include)
+        const res = await axios.post("/api/auth/refresh", {}, { withCredentials: true });
 
-      if (token) {
-        try {
-          const decoded = jwtDecode(token);
+        const { accessToken } = res.data;
 
-          // Check if token is expired
-          if (decoded.exp * 1000 > Date.now()) {
-            setUser({ id: decoded.id, username: decoded.username });
-            // Set default header
-            axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
-          } else {
-            localStorage.removeItem("token");
-            delete axios.defaults.headers.common["Authorization"];
-          }
-        } catch (error) {
-          console.error("Invalid token:", error);
-          localStorage.removeItem("token");
-          delete axios.defaults.headers.common["Authorization"];
-        }
+        setAccessToken(accessToken);
+        const decoded = jwtDecode(accessToken);
+        setUser({ id: decoded.id, username: decoded.username });
+      } catch (error) {
+        // No valid session (cookie missing or expired)
+        console.log("No active session found during bootstrap.");
+        setUser(null);
+        setAccessToken(null);
+      } finally {
+        setLoading(false); // Bootstrap complete
       }
-      setLoading(false);
     };
 
     initializeAuth();
   }, []);
 
+  // Axios Interceptors
+  useEffect(() => {
+    // Request Interceptor: Attach Access Token
+    const requestInterceptor = axios.interceptors.request.use(
+      (config) => {
+        if (accessToken) {
+          config.headers.Authorization = `Bearer ${accessToken}`;
+        }
+        return config;
+      },
+      (error) => Promise.reject(error)
+    );
+
+    // Response Interceptor: Handle 401 (Silent Refresh)
+    const responseInterceptor = axios.interceptors.response.use(
+      (response) => response,
+      async (error) => {
+        const originalRequest = error.config;
+
+        // If 401 and not already retrying
+        if (error.response?.status === 401 && !originalRequest._retry) {
+          originalRequest._retry = true;
+
+          try {
+            // Attempt silent refresh
+            const res = await axios.post("/api/auth/refresh");
+            const { accessToken: newAccessToken } = res.data;
+
+            setAccessToken(newAccessToken);
+
+            // Retry original request with new token
+            originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
+            return axios(originalRequest);
+          } catch (refreshError) {
+            // Refresh failed (cookie expired/invalid) -> Logout
+            console.error("Session expired:", refreshError);
+            logout(); // Clear state
+            return Promise.reject(refreshError);
+          }
+        }
+        return Promise.reject(error);
+      }
+    );
+
+    return () => {
+      axios.interceptors.request.eject(requestInterceptor);
+      axios.interceptors.response.eject(responseInterceptor);
+    };
+  }, [accessToken]);
+
+
   const login = async (username, password) => {
     try {
+      // Login sets HTTP-Only cookie and returns Access Token
       const res = await axios.post("/api/auth/login", {
         username,
         password,
       });
 
-      const { token } = res.data;
+      const { accessToken } = res.data;
+      setAccessToken(accessToken);
 
-      // Save to localStorage
-      localStorage.setItem("token", token);
-
-      // Set default header
-      axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
-
-      const decoded = jwtDecode(token);
+      const decoded = jwtDecode(accessToken);
       setUser({ id: decoded.id, username: decoded.username });
 
       return { success: true };
@@ -69,19 +114,15 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+
   const register = async (username, password) => {
     try {
       const res = await axios.post("/api/auth/register", { username, password });
 
-      const { token } = res.data;
+      const { accessToken } = res.data;
+      setAccessToken(accessToken);
 
-      // Save to localStorage
-      localStorage.setItem("token", token);
-
-      // Set default header
-      axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
-
-      const decoded = jwtDecode(token);
+      const decoded = jwtDecode(accessToken);
       setUser({ id: decoded.id, username: decoded.username });
 
       return { success: true };
@@ -94,9 +135,14 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const logout = () => {
-    localStorage.removeItem("token");
-    delete axios.defaults.headers.common["Authorization"];
+
+  const logout = async () => {
+    try {
+      await axios.post("/api/auth/logout");
+    } catch (err) {
+      console.error("Logout failed", err);
+    }
+    setAccessToken(null);
     setUser(null);
   };
 

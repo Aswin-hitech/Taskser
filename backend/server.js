@@ -1,7 +1,25 @@
-require("dotenv").config();   // ✅ MUST be first line
+const config = require("./config/env");
 
 const express = require("express");
 const cors = require("cors");
+const cookieparser = require("cookie-parser");
+
+// --- Deployment Helper & Startup Validation ---
+const diag = config.getDiagnostics();
+console.log("-----------------------------------------");
+console.log(`🚀 Startup Environment: ${diag.environment}`);
+console.log(`📡 Port: ${diag.port}`);
+console.log(`🔑 Secrets Loaded: ${diag.secretsLoaded ? "YES" : "NO"}`);
+console.log(`📂 Source: ${diag.source}`);
+if (diag.missing.length > 0) {
+  console.warn(`⚠️  Missing: ${diag.missing.join(", ")}`);
+}
+console.log("-----------------------------------------");
+
+if (!config.isValid && config.isProduction) {
+  console.error("❌ FATAL: JWT Secrets missing in production. Shutting down.");
+  process.exit(1);
+}
 
 const noteRoutes = require("./routes/notes");
 const authRoutes = require("./routes/auth");
@@ -19,11 +37,14 @@ connectDB();
 
 // ✅ CORS (works for local + deploy)
 app.use(cors({
-  origin: process.env.FRONTEND_URL,
-  credentials: true
+  origin: config.frontendUrl,
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"]
 }));
 
 app.use(express.json());
+app.use(cookieparser());
 
 // ✅ Routes
 app.use("/api/auth", authRoutes);

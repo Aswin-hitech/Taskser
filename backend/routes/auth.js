@@ -1,10 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const User = require("../models/User");
-const jwt = require("jsonwebtoken");
-
-const JWT_SECRET = process.env.JWT_SECRET;
-
+const { generateAccessToken, generateRefreshToken, verifyRefreshToken, verifyAccessToken } = require("../utils/authUtils");
 
 // REGISTER
 router.post("/register", async (req, res) => {
@@ -19,14 +16,24 @@ router.post("/register", async (req, res) => {
     const user = new User({ username, password });
     await user.save();
 
-    // Issue single long-lived token
-    const token = jwt.sign(
-      { id: user._id, username: user.username },
-      JWT_SECRET,
-      { expiresIn: "30d" }
-    );
+    const accessToken = generateAccessToken(user);
+    const refreshToken = generateRefreshToken(user);
 
-    res.status(201).json({ message: "User registered successfully", token });
+    if (!accessToken || !refreshToken) {
+      return res.status(500).json({ message: "JWT secret not configured in environment" });
+    }
+
+    // Send Refresh Token as HTTP-Only Cookie
+    res.cookie("refreshToken", refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+      maxAge: 30 * 24 * 60 * 60 * 1000,
+      path: "/"
+    });
+
+
+    res.status(201).json({ message: "User registered successfully", accessToken });
   } catch (err) {
     console.error("Register error:", err.message);
     res.status(500).json({ message: "Registration failed" });
@@ -39,7 +46,7 @@ router.post("/login", async (req, res) => {
   try {
     const { username, password } = req.body;
 
-    const user = await User.findOne({ username });
+    const user = await User.findOne({ username }).select("+password");
     if (!user) {
       return res.status(401).json({ message: "Invalid credentials" });
     }
@@ -49,18 +56,72 @@ router.post("/login", async (req, res) => {
       return res.status(401).json({ message: "Invalid credentials" });
     }
 
-    // Issue single long-lived token
-    const token = jwt.sign(
-      { id: user._id, username: user.username },
-      JWT_SECRET,
-      { expiresIn: "30d" }
-    );
 
-    res.json({ token });
+    const accessToken = generateAccessToken(user);
+    const refreshToken = generateRefreshToken(user);
+
+    if (!accessToken || !refreshToken) {
+      return res.status(500).json({ message: "JWT secret not configured in environment" });
+    }
+
+    // Send Refresh Token as HTTP-Only Cookie
+    res.cookie("refreshToken", refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+      maxAge: 30 * 24 * 60 * 60 * 1000,
+      path: "/"
+    });
+
+
+    res.json({ accessToken });
   } catch (err) {
     console.error("Login error:", err.message);
     res.status(500).json({ message: "Login failed" });
   }
+});
+
+
+// REFRESH TOKEN (Stateless)
+router.post("/refresh", async (req, res) => {
+  const refreshToken = req.cookies.refreshToken;
+
+  if (!refreshToken) {
+    return res.status(401).json({ message: "No refresh token" });
+  }
+
+  const decoded = verifyRefreshToken(refreshToken);
+  if (!decoded) {
+    return res.status(403).json({ message: "Invalid refresh token" });
+  }
+
+  try {
+    const user = await User.findById(decoded.id);
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    const accessToken = generateAccessToken(user);
+    if (!accessToken) {
+      return res.status(500).json({ message: "JWT secret not configured in environment" });
+    }
+
+    res.json({ accessToken });
+  } catch (error) {
+    console.error("Refresh error", error);
+    res.status(500).send("Internal server error");
+  }
+});
+
+
+// LOGOUT
+router.post("/logout", (req, res) => {
+  res.clearCookie("refreshToken", {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+    path: "/"
+  });
+
+  res.json({ message: "Logged out successfully" });
 });
 
 
@@ -73,25 +134,21 @@ router.get("/me", async (req, res) => {
     return res.status(401).json({ message: "No token" });
   }
 
+  const decoded = verifyAccessToken(token);
+  if (!decoded) {
+    return res.status(401).json({ message: "Invalid or expired token" });
+  }
+
   try {
-    const decoded = jwt.verify(token, JWT_SECRET);
-
     const user = await User.findById(decoded.id).select("-password");
-
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
-
     res.json(user);
   } catch (err) {
     console.error("ME ROUTE ERROR:", err.message);
-    res.status(401).json({ message: "Invalid token" });
+    res.status(500).json({ message: "Internal server error" });
   }
-});
-
-// LOGOUT (Client-side mainly, but provided for completeness)
-router.post("/logout", (req, res) => {
-  res.json({ message: "Logged out successfully" });
 });
 
 

@@ -9,7 +9,7 @@ const generateAccessToken = (user) => {
     return jwt.sign(
         { id: user._id, username: user.username },
         config.accessSecret,
-        { expiresIn: "30d" }
+        { expiresIn: "7d" }
 
     );
 };
