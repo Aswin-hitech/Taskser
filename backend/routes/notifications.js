@@ -3,8 +3,7 @@ const jwt = require("jsonwebtoken");
 const Notification = require("../models/Notification");
 
 const router = express.Router();
-const config = require("../config/env");
-const JWT_SECRET = config.accessSecret;
+const JWT_SECRET = process.env.JWT_SECRET;
 
 // Debug middleware
 router.use((req, res, next) => {

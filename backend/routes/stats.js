@@ -5,8 +5,7 @@ const Note = require("../models/Note");
 const Checklist = require("../models/CheckList");
 
 const router = express.Router();
-const config = require("../config/env");
-const JWT_SECRET = config.accessSecret;
+const JWT_SECRET = process.env.JWT_SECRET;
 
 const getUserId = (req) => {
   const authHeader = req.headers.authorization;
