@@ -15,6 +15,7 @@ export const TaskProvider = ({ children }) => {
 
 
   useEffect(() => {
+    console.log("Auth user:", user);
     if (!loading && user) {
       fetchTasks();
     } else {

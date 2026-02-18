@@ -13,26 +13,29 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true); // App Bootstrap Loading State
   const [accessToken, setAccessToken] = useState(null);
 
-  // Bootstrap: Check session on mount
   useEffect(() => {
     const initializeAuth = async () => {
       try {
-        // Attempt to refresh token to get initial session
-        // This validates the HTTP-Only cookie (credentials: include)
-        const res = await axios.post("/api/auth/refresh", {}, { withCredentials: true });
+        const res = await axios.post(
+          "/api/auth/refresh",
+          {},
+          { withCredentials: true }
+        );
 
+        console.log("Refresh response:", res.data);
         const { accessToken } = res.data;
 
         setAccessToken(accessToken);
+
         const decoded = jwtDecode(accessToken);
         setUser({ id: decoded.id, username: decoded.username });
-      } catch (error) {
-        // No valid session (cookie missing or expired)
-        console.log("No active session found during bootstrap.");
+
+      } catch (err) {
+        console.error("Refresh error during bootstrap:", err.response?.data || err.message);
         setUser(null);
         setAccessToken(null);
       } finally {
-        setLoading(false); // Bootstrap complete
+        setLoading(false);
       }
     };
 
