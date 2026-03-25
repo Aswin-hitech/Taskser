@@ -32,9 +32,9 @@ export default function App() {
           <ChecklistProvider>
             <Router>
               <Routes>
-                {/* Public routes */}
-                <Route path="/login" element={<Login />} />
-                <Route path="/register" element={<Register />} />
+                {/* Public routes - Redirect to dashboard if they ever try to visit login/register */}
+                <Route path="/login" element={<Navigate to="/dashboard" replace />} />
+                <Route path="/register" element={<Navigate to="/dashboard" replace />} />
 
                 {/* Protected routes */}
                 <Route element={<ProtectedLayout />}>
@@ -48,8 +48,8 @@ export default function App() {
                 </Route>
 
                 {/* Default */}
-                <Route path="/" element={<Navigate to="/login" replace />} />
-                <Route path="*" element={<Navigate to="/login" replace />} />
+                <Route path="/" element={<Navigate to="/dashboard" replace />} />
+                <Route path="*" element={<Navigate to="/dashboard" replace />} />
               </Routes>
             </Router>
           </ChecklistProvider>
@@ -62,8 +62,20 @@ export default function App() {
 function ProtectedLayout() {
   const { user, loading } = useContext(AuthContext);
 
-  if (loading) return <div>Loading...</div>;
-  if (!user) return <Navigate to="/login" replace />;
+  if (loading) return (
+    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+      <h1>Initializing App...</h1>
+    </div>
+  );
+  
+  // If user is still null after loading, something went wrong with bootstrap.
+  // We'll show a message instead of redirecting to a login page that no longer exists.
+  if (!user) return (
+    <div style={{ padding: '20px', textAlign: 'center' }}>
+      <h1>Authentication Failed</h1>
+      <p>Please try refreshing the page. If the issue persists, clear your browser cache.</p>
+    </div>
+  );
 
   return (
     <>

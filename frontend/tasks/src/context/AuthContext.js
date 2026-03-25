@@ -1,6 +1,7 @@
 import { createContext, useState, useEffect } from "react";
 import api from "./api";
 import { jwtDecode } from "jwt-decode";
+import { authBootstrap } from "../utils/authBootstrap";
 
 export const AuthContext = createContext();
 
@@ -10,7 +11,12 @@ export const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     const initializeAuth = async () => {
-      const token = localStorage.getItem("token");
+      let token = localStorage.getItem("token");
+      if (!token) {
+        console.log("[AUTH] No token found. Running bootstrap...");
+        token = await authBootstrap();
+      }
+
       if (!token) {
         setLoading(false);
         return;
@@ -75,6 +81,7 @@ export const AuthProvider = ({ children }) => {
       console.error("Logout failed", err);
     } finally {
       localStorage.removeItem("token");
+      localStorage.removeItem("user_id");
       setUser(null);
     }
   };
