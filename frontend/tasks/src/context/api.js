@@ -21,8 +21,7 @@ api.interceptors.request.use(
           // Token expired, clear it
           localStorage.removeItem("token");
           sessionStorage.removeItem("token");
-          // Silently trigger re-auth on next request or let the app handle it
-          console.warn("[API] Token expired. Re-auth required.");
+          window.location.href = "/login";
         }
       } catch (error) {
         console.error("Token validation error:", error);
@@ -48,8 +47,9 @@ api.interceptors.response.use(
       sessionStorage.removeItem("token");
       
       // Only redirect if not already on login page
-      // window.location.href = "/login";
-      console.error("[API] 401 Unauthorized. Session may have expired.");
+      if (!window.location.pathname.includes("/login")) {
+        window.location.href = "/login";
+      }
     }
     return Promise.reject(error);
   }
