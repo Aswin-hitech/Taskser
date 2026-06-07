@@ -55,7 +55,7 @@ app.use("/api/checklists", checklistRoutes);
 app.use("/api/stats", statsRoutes);
 
 // ✅ Use env PORT
-const PORT = process.env.PORT || 5000;
+const PORT = config.port;
 
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`✅ Server running on port ${PORT}`);

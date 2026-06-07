@@ -1,5 +1,5 @@
 import { useState, useContext } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 
 export default function Register() {
@@ -19,8 +19,12 @@ export default function Register() {
   };
 
   return (
-    <div style={{ maxWidth: "400px", margin: "100px auto", padding: "30px", background: "#111", borderRadius: "12px" }}>
-      <h2 style={{ textAlign: "center", marginBottom: 30 }}>Create Account</h2>
+    <div className="auth-page">
+      <div className="auth-container">
+        <div className="auth-header">
+          <h2 className="auth-title">Create Account</h2>
+          <h4 className="auth-subtitle">Start planning with Taskser</h4>
+        </div>
       <form onSubmit={handleSubmit}>
         <input
           type="text"
@@ -36,10 +40,14 @@ export default function Register() {
           onChange={(e) => setPassword(e.target.value)}
           required
         />
-        <button type="submit" style={{ width: "100%", marginTop: 20 }}>
+        <button type="submit" className="auth-button">
           Register
         </button>
       </form>
+        <p className="auth-footer">
+          Already registered? <Link id="reg" to="/login">Login</Link>
+        </p>
+      </div>
     </div>
   );
 }

@@ -1,7 +1,6 @@
 import { useContext, useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
-import hamburger from "../assets/hamburger.jpg";
 import "../styles.css";
 
 export default function Navbar() {
@@ -41,13 +40,17 @@ export default function Navbar() {
         Logout
       </button>
 
-      {/* Hamburger Icon (Mobile) */}
-      <img
-        src={hamburger}
-        alt="Menu"
-        className="hamburger-icon mobile-only"
+      <button
+        type="button"
+        className="menu-toggle mobile-only"
+        aria-label="Toggle menu"
+        aria-expanded={menuOpen}
         onClick={() => setMenuOpen(!menuOpen)}
-      />
+      >
+        <span />
+        <span />
+        <span />
+      </button>
 
       {/* Mobile Menu */}
       {menuOpen && (

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import axios from "axios";
+import api from "../context/api";
 
 export default function Notifications() {
   const [notifications, setNotifications] = useState([]);
@@ -13,10 +13,7 @@ export default function Notifications() {
 
   const fetchNotifications = async () => {
     try {
-      const token = localStorage.getItem("token") || sessionStorage.getItem("token");
-      const res = await axios.get("/api/notifications", {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const res = await api.get("/api/notifications");
       setNotifications(res.data);
       setSelectedNotifications([]);
       setSelectAll(false);
@@ -29,10 +26,7 @@ export default function Notifications() {
 
   const markAsViewed = async (id) => {
     try {
-      const token = localStorage.getItem("token") || sessionStorage.getItem("token");
-      await axios.put(`/api/notifications/${id}/view`, {}, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      await api.put(`/api/notifications/${id}/view`);
       setNotifications((prev) =>
         prev.map((n) =>
           n._id === id ? { ...n, viewed: true } : n
@@ -45,10 +39,7 @@ export default function Notifications() {
 
   const markAllAsRead = async () => {
     try {
-      const token = localStorage.getItem("token") || sessionStorage.getItem("token");
-      await axios.put("/api/notifications/mark-all-read", {}, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      await api.put("/api/notifications/mark-all-read");
       
       // Update local state
       setNotifications((prev) =>
@@ -67,10 +58,7 @@ export default function Notifications() {
     }
     
     try {
-      const token = localStorage.getItem("token") || sessionStorage.getItem("token");
-      await axios.delete(`/api/notifications/${id}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      await api.delete(`/api/notifications/${id}`);
       setNotifications((prev) => prev.filter((n) => n._id !== id));
       setSelectedNotifications((prev) => prev.filter((selectedId) => selectedId !== id));
     } catch (err) {
@@ -89,11 +77,7 @@ export default function Notifications() {
     }
     
     try {
-      const token = localStorage.getItem("token") || sessionStorage.getItem("token");
-      await axios.delete("/api/notifications", {
-        headers: { Authorization: `Bearer ${token}` },
-        data: { ids: selectedNotifications }
-      });
+      await api.delete("/api/notifications", { data: { ids: selectedNotifications } });
       
       // Remove deleted notifications from state
       setNotifications((prev) => 

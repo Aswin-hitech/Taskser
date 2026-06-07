@@ -1,4 +1,4 @@
-import { createContext, useState, useEffect, useContext } from "react";
+import { createContext, useState, useEffect, useContext, useCallback } from "react";
 import api from "./api"; // Use the new api utility
 import { AuthContext } from "./AuthContext";
 
@@ -9,7 +9,7 @@ export const ChecklistProvider = ({ children }) => {
   const [lists, setLists] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  const fetchLists = async () => {
+  const fetchLists = useCallback(async () => {
     if (!isAuthenticated()) {
       setLists([]);
       setLoading(false);
@@ -25,13 +25,13 @@ export const ChecklistProvider = ({ children }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [isAuthenticated]);
 
   useEffect(() => {
     if (authChecked) {
       fetchLists();
     }
-  }, [authChecked]);
+  }, [authChecked, fetchLists]);
 
   const createList = async (title) => {
     if (!title.trim()) return;

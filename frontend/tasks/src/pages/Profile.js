@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
-import axios from "axios";
-import { useAuth } from "../context/AuthContext"; // Assuming you have this hook
+import api from "../context/api";
 
 export default function Profile() {
   const [profileData, setProfileData] = useState(null);
@@ -20,17 +19,8 @@ export default function Profile() {
   useEffect(() => {
     const fetchProfileAndStats = async () => {
       try {
-        const token = localStorage.getItem("token");
-        
-        // Fetch profile data
-        const profileRes = await axios.get("/api/auth/me", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        
-        // Fetch user statistics
-        const statsRes = await axios.get("/api/stats", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        const profileRes = await api.get("/api/auth/me");
+        const statsRes = await api.get("/api/stats");
 
         setProfileData(profileRes.data);
         setStats(statsRes.data);
@@ -206,7 +196,7 @@ export default function Profile() {
             <span className="action-text">Dashboard</span>
           </button>
           
-          <button className="action-btn" onClick={() => window.location.href = '/tasks'}>
+          <button className="action-btn" onClick={() => window.location.href = '/dashboard'}>
             <span className="action-icon">➕</span>
             <span className="action-text">New Task</span>
           </button>

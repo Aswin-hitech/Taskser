@@ -26,9 +26,9 @@ const REFRESH_TOKEN_SECRET = getSecret("REFRESH_TOKEN_SECRET", "JWT_REFRESH_SECR
 
 const config = {
     isProduction,
-    port: process.env.PORT || 3000,
+    port: process.env.PORT || 5000,
     mongoUri: process.env.MONGO_URI,
-    frontendUrl: process.env.FRONTEND_URL || "http://localhost:5000",
+    frontendUrl: process.env.FRONTEND_URL || "http://localhost:3000",
     accessSecret: ACCESS_TOKEN_SECRET,
     refreshSecret: REFRESH_TOKEN_SECRET,
 
@@ -38,7 +38,7 @@ const config = {
     // Diagnostic Info
     getDiagnostics: () => ({
         environment: process.env.NODE_ENV || "development",
-        port: process.env.PORT || 3000,
+        port: process.env.PORT || 5000,
         secretsLoaded: !!(ACCESS_TOKEN_SECRET && REFRESH_TOKEN_SECRET),
         source: isProduction ? "Host Environment Variables" : ".env file or Fallbacks",
         missing: [

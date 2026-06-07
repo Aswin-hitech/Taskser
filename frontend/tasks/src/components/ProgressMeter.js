@@ -9,7 +9,6 @@ export default function ProgressMeter({ percentage = 0 }) {
   const offset = circumference - (safe / 100) * circumference;
   
   // Dynamic color based on percentage
-  let gradientId = "progressGradient";
   let color;
   
   if (safe < 40) {
