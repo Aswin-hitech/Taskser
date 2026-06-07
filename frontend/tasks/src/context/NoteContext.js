@@ -11,7 +11,7 @@ export const NoteProvider = ({ children }) => {
   const fetchNotes = useCallback(async () => {
     try {
       const res = await api.get("/api/notes");
-      setNotes(res.data);
+      setNotes(res.data.notes || []);
     } catch (err) {
       console.error("FETCH NOTES ERROR:", err.message);
     }
@@ -28,7 +28,7 @@ export const NoteProvider = ({ children }) => {
   const addNote = async ({ title, content }) => {
     try {
       const res = await api.post("/api/notes", { title, content });
-      setNotes((prev) => [res.data, ...prev]);
+      setNotes((prev) => [res.data.note, ...prev]);
     } catch (err) {
       console.error("ADD NOTE ERROR:", err.message);
     }
@@ -37,7 +37,7 @@ export const NoteProvider = ({ children }) => {
   const updateNote = async (id, title, content) => {
     try {
       const res = await api.put(`/api/notes/${id}`, { title, content });
-      setNotes((prev) => prev.map((n) => (n._id === id ? res.data : n)));
+      setNotes((prev) => prev.map((n) => (n._id === id ? res.data.note : n)));
     } catch (err) {
       console.error("UPDATE NOTE ERROR:", err.message);
     }

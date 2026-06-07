@@ -18,7 +18,7 @@ export const ChecklistProvider = ({ children }) => {
 
     try {
       const res = await api.get("/api/checklists");
-      setLists(res.data);
+      setLists(res.data.lists || []);
     } catch (err) {
       console.error("FETCH LISTS ERROR:", err.message);
       setLists([]);
@@ -37,8 +37,8 @@ export const ChecklistProvider = ({ children }) => {
     if (!title.trim()) return;
     try {
       const res = await api.post("/api/checklists", { title });
-      setLists((prev) => [...prev, res.data]);
-      return { success: true, data: res.data };
+      setLists((prev) => [...prev, res.data.list]);
+      return { success: true, data: res.data.list };
     } catch (err) {
       console.error("CREATE LIST ERROR:", err.message);
       return { success: false, error: err.message };
@@ -49,9 +49,9 @@ export const ChecklistProvider = ({ children }) => {
     try {
       const res = await api.put(`/api/checklists/${id}`, data);
       setLists((prev) =>
-        prev.map((l) => (l._id === id ? res.data : l))
+        prev.map((l) => (l._id === id ? res.data.list : l))
       );
-      return { success: true, data: res.data };
+      return { success: true, data: res.data.list };
     } catch (err) {
       console.error("UPDATE LIST ERROR:", err.message);
       return { success: false, error: err.message };

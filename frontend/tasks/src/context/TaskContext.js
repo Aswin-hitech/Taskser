@@ -11,7 +11,7 @@ export const TaskProvider = ({ children }) => {
   const fetchTasks = useCallback(async () => {
     try {
       const res = await api.get("/api/tasks");
-      setTasks(res.data);
+      setTasks(res.data.tasks || []);
     } catch (err) {
       console.error("FETCH TASKS ERROR:", err.response?.data || err.message);
     }
@@ -28,7 +28,7 @@ export const TaskProvider = ({ children }) => {
   const addTask = async (taskData) => {
     try {
       const res = await api.post("/api/tasks", taskData);
-      setTasks((prev) => [...prev, res.data]);
+      setTasks((prev) => [...prev, res.data.task]);
     } catch (err) {
       console.error("ADD TASK ERROR:", err.response?.data || err.message);
     }
@@ -37,7 +37,7 @@ export const TaskProvider = ({ children }) => {
   const toggleComplete = async (id) => {
     try {
       const res = await api.put(`/api/tasks/${id}`);
-      setTasks((prev) => prev.map((t) => (t._id === id ? res.data : t)));
+      setTasks((prev) => prev.map((t) => (t._id === id ? res.data.task : t)));
     } catch (err) {
       console.error("TOGGLE ERROR:", err.message);
     }
@@ -55,7 +55,7 @@ export const TaskProvider = ({ children }) => {
   const checkInHabit = async (id) => {
     try {
       const res = await api.post(`/api/tasks/${id}/checkin`);
-      setTasks((prev) => prev.map((t) => (t._id === id ? res.data : t)));
+      setTasks((prev) => prev.map((t) => (t._id === id ? res.data.task : t)));
     } catch (err) {
       console.error("CHECK-IN ERROR:", err.message);
     }
@@ -64,16 +64,13 @@ export const TaskProvider = ({ children }) => {
   const resetHabitStreak = async (id) => {
     try {
       const res = await api.post(`/api/tasks/${id}/reset-streak`);
-      setTasks((prev) => prev.map((t) => (t._id === id ? res.data : t)));
+      setTasks((prev) => prev.map((t) => (t._id === id ? res.data.task : t)));
     } catch (err) {
       console.error("RESET STREAK ERROR:", err.message);
     }
   };
 
-  const moveTask = async (id, direction) => {
-    await api.put(`/api/tasks/${id}/move`, { direction });
-    fetchTasks();
-  };
+  // moveTask removed - no backend route exists for this
 
   return (
     <TaskContext.Provider
@@ -84,7 +81,7 @@ export const TaskProvider = ({ children }) => {
         deleteTask,
         checkInHabit,
         resetHabitStreak,
-        moveTask,
+
       }}
     >
       {children}

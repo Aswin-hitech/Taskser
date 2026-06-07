@@ -51,18 +51,6 @@ export default function Navbar() {
         <span />
         <span />
       </button>
-
-      {/* Mobile Menu */}
-      {menuOpen && (
-        <div className="mobile-menu">
-          <NavLink to="/dashboard" className={linkClass} onClick={() => setMenuOpen(false)}>Tasks</NavLink>
-          <NavLink to="/calendar" className={linkClass} onClick={() => setMenuOpen(false)}>Calendar</NavLink>
-          <NavLink to="/notes" className={linkClass} onClick={() => setMenuOpen(false)}>Notes</NavLink>
-          <NavLink to="/notifications" className={linkClass} onClick={() => setMenuOpen(false)}>Notifications</NavLink>
-          <NavLink to="/settings" className={linkClass} onClick={() => setMenuOpen(false)}>Settings</NavLink>
-          <NavLink to="/profile" className={linkClass} onClick={() => setMenuOpen(false)}>Profile</NavLink>
-
-          <button className="logout-btn mobile-logout" onClick={handleLogout}>
             Logout
           </button>
         </div>

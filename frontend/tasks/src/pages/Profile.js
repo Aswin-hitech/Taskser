@@ -22,8 +22,8 @@ export default function Profile() {
         const profileRes = await api.get("/api/auth/me");
         const statsRes = await api.get("/api/stats");
 
-        setProfileData(profileRes.data);
-        setStats(statsRes.data);
+        setProfileData(profileRes.data.user);
+        setStats(statsRes.data.stats);
       } catch (error) {
         console.error("Failed to load profile:", error);
         setProfileData(null);

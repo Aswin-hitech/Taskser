@@ -46,6 +46,43 @@ router.post("/", protect, async (req, res) => {
   }
 });
 
+/* MARK ALL READ */
+router.put("/mark-all-read", protect, async (req, res) => {
+  try {
+    await Notification.updateMany(
+      { user: req.userId, viewed: false },
+      { $set: { viewed: true } }
+    );
+    res.json({ success: true, message: "All marked read" });
+  } catch (err) {
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+});
+
+/* CLEAR ALL */
+router.delete("/clear-all", protect, async (req, res) => {
+  try {
+    await Notification.deleteMany({ user: req.userId });
+    res.json({ success: true, message: "Notifications cleared" });
+  } catch (err) {
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+});
+
+/* DELETE BULK */
+router.delete("/bulk", protect, async (req, res) => {
+  try {
+    const { ids } = req.body;
+    if (!Array.isArray(ids) || ids.length === 0) {
+      return res.status(400).json({ success: false, message: "No IDs provided" });
+    }
+    await Notification.deleteMany({ _id: { $in: ids }, user: req.userId });
+    res.json({ success: true, message: "Notifications deleted" });
+  } catch (err) {
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+});
+
 /* MARK VIEWED */
 router.put("/:id/view", protect, async (req, res) => {
   try {
@@ -62,35 +99,12 @@ router.put("/:id/view", protect, async (req, res) => {
   }
 });
 
-/* MARK ALL READ */
-router.put("/mark-all-read", protect, async (req, res) => {
-  try {
-    await Notification.updateMany(
-      { user: req.userId, viewed: false },
-      { $set: { viewed: true } }
-    );
-    res.json({ success: true, message: "All marked read" });
-  } catch (err) {
-    res.status(500).json({ success: false, message: "Server error" });
-  }
-});
-
 /* DELETE SINGLE */
 router.delete("/:id", protect, async (req, res) => {
   try {
     const result = await Notification.findOneAndDelete({ _id: req.params.id, user: req.userId });
     if (!result) return res.status(404).json({ success: false, message: "Not found" });
     res.json({ success: true, message: "Deleted" });
-  } catch (err) {
-    res.status(500).json({ success: false, message: "Server error" });
-  }
-});
-
-/* CLEAR ALL */
-router.delete("/clear-all", protect, async (req, res) => {
-  try {
-    await Notification.deleteMany({ user: req.userId });
-    res.json({ success: true, message: "Notifications cleared" });
   } catch (err) {
     res.status(500).json({ success: false, message: "Server error" });
   }

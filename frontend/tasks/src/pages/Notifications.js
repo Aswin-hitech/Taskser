@@ -14,7 +14,7 @@ export default function Notifications() {
   const fetchNotifications = async () => {
     try {
       const res = await api.get("/api/notifications");
-      setNotifications(res.data);
+      setNotifications(res.data.notifications || []);
       setSelectedNotifications([]);
       setSelectAll(false);
     } catch (err) {
@@ -77,7 +77,7 @@ export default function Notifications() {
     }
     
     try {
-      await api.delete("/api/notifications", { data: { ids: selectedNotifications } });
+      await api.delete("/api/notifications/bulk", { data: { ids: selectedNotifications } });
       
       // Remove deleted notifications from state
       setNotifications((prev) => 
