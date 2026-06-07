@@ -1,69 +1,71 @@
 const express = require("express");
+const jwt = require("jsonwebtoken");
 const Note = require("../models/Note");
-const protect = require("../middleware/protect");
 
 const router = express.Router();
+const JWT_SECRET = "mysecretkey";
 
-// 1. GET ALL NOTES
+const protect = (req, res, next) => {
+  const authHeader = req.headers.authorization;
+  const token = authHeader && authHeader.split(" ")[1];
+
+  if (!token) return res.status(401).json({ msg: "No token" });
+
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET);
+    req.userId = decoded.id;
+    next();
+  } catch {
+    res.status(401).json({ msg: "Invalid token" });
+  }
+};
+
+
 router.get("/", protect, async (req, res) => {
-  try {
-    const notes = await Note.find({ user: req.userId }).sort({ createdAt: -1 });
-    res.json({ success: true, notes });
-  } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
-  }
+  const notes = await Note.find({ user: req.userId })
+    .sort({ createdAt: -1 });
+  res.json(notes);
 });
 
-// 2. CREATE NOTE
 router.post("/", protect, async (req, res) => {
-  try {
-    const { title, content } = req.body;
-    if (!content) return res.status(400).json({ success: false, message: "Content required" });
+  const { title, content } = req.body;
+  if (!content) return res.status(400).json({ msg: "Content required" });
 
-    const note = new Note({
-      user: req.userId,
-      title: title || "Untitled",
-      content,
-    });
+  const note = new Note({
+    user: req.userId,
+    title: title || "Untitled",
+    content,
+  });
 
-    await note.save();
-    res.status(201).json({ success: true, note });
-  } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
-  }
+  await note.save();
+  res.status(201).json(note);
 });
 
-// 3. UPDATE NOTE
+
 router.put("/:id", protect, async (req, res) => {
-  try {
-    const { title, content } = req.body;
+  const { title, content } = req.body;
 
-    const note = await Note.findOneAndUpdate(
-      { _id: req.params.id, user: req.userId },
-      { title, content },
-      { new: true }
-    );
+  const note = await Note.findOneAndUpdate(
+    { _id: req.params.id, user: req.userId },
+    { title, content },
+    { new: true }
+  );
 
-    if (!note) return res.status(404).json({ success: false, message: "Note not found" });
-    res.json({ success: true, note });
-  } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
-  }
+  if (!note) return res.status(404).json({ msg: "Note not found" });
+
+  res.json(note);
 });
 
-// 4. DELETE NOTE
-router.delete("/:id", protect, async (req, res) => {
-  try {
-    const note = await Note.findOneAndDelete({
-      _id: req.params.id,
-      user: req.userId,
-    });
 
-    if (!note) return res.status(404).json({ success: false, message: "Note not found" });
-    res.json({ success: true, message: "Note deleted" });
-  } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
-  }
+router.delete("/:id", protect, async (req, res) => {
+  const note = await Note.findOneAndDelete({
+    _id: req.params.id,
+    user: req.userId,
+  });
+
+  if (!note) return res.status(404).json({ msg: "Note not found" });
+
+  res.json({ msg: "Note deleted" });
 });
 
 module.exports = router;

@@ -1,117 +1,80 @@
 const express = require("express");
 const router = express.Router();
 const User = require("../models/User");
-const protect = require("../middleware/protect");
-const {
-  generateAccessToken,
-  generateRefreshToken,
-  verifyRefreshToken
-} = require("../utils/authUtils");
+const jwt = require("jsonwebtoken");
 
-const COOKIE_OPTIONS = {
-  httpOnly: true,
-  secure: process.env.NODE_ENV === "production",
-  sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
-  maxAge: 30 * 24 * 60 * 60 * 1000,
-  path: "/"
-};
+const JWT_SECRET = "mysecretkey";
 
-// REGISTER
+
 router.post("/register", async (req, res) => {
   try {
     const { username, password } = req.body;
 
-    if (!username || !password) {
-      return res.status(400).json({ success: false, message: "Username and password are required" });
-    }
-
     const existingUser = await User.findOne({ username });
     if (existingUser) {
-      return res.status(400).json({ success: false, message: "Username already exists" });
+      return res.status(400).json({ message: "Username already exists" });
     }
 
     const user = new User({ username, password });
     await user.save();
 
-    const accessToken = generateAccessToken(user);
-    const refreshToken = generateRefreshToken(user);
-
-    if (!accessToken || !refreshToken) {
-      throw new Error("JWT generation failed");
-    }
-
-    res.cookie("refreshToken", refreshToken, COOKIE_OPTIONS);
-    res.status(201).json({ success: true, accessToken });
+    res.status(201).json({ message: "User registered successfully" });
   } catch (err) {
-    console.error("[REGISTER ERROR]", err.message);
-    res.status(500).json({ success: false, message: "Registration failed" });
+    console.error("Register error:", err.message);
+    res.status(500).json({ message: "Registration failed" });
   }
 });
 
 
-// LOGIN
 router.post("/login", async (req, res) => {
   try {
     const { username, password } = req.body;
 
-    const user = await User.findOne({ username }).select("+password");
-    if (!user || !(await user.matchPassword(password))) {
-      return res.status(401).json({ success: false, message: "Invalid credentials" });
+    const user = await User.findOne({ username });
+    if (!user) {
+      return res.status(401).json({ message: "Invalid credentials" });
     }
 
-    const accessToken = generateAccessToken(user);
-    const refreshToken = generateRefreshToken(user);
+    const isMatch = await user.matchPassword(password);
+    if (!isMatch) {
+      return res.status(401).json({ message: "Invalid credentials" });
+    }
 
-    res.cookie("refreshToken", refreshToken, COOKIE_OPTIONS);
-    res.json({ success: true, accessToken });
+    const token = jwt.sign(
+      { id: user._id },
+      JWT_SECRET,
+      { expiresIn: "1d" }
+    );
+
+    res.json({ token });
   } catch (err) {
-    console.error("[LOGIN ERROR]", err.message);
-    res.status(500).json({ success: false, message: "Login failed" });
+    console.error("Login error:", err.message);
+    res.status(500).json({ message: "Login failed" });
   }
 });
 
 
-// REFRESH TOKEN
-router.post("/refresh", async (req, res) => {
-  const refreshToken = req.cookies.refreshToken;
+router.get("/me", async (req, res) => {
+  const authHeader = req.headers.authorization;
+  const token = authHeader && authHeader.split(" ")[1];
 
-  if (!refreshToken) {
-    return res.status(401).json({ success: false, message: "No refresh token" });
-  }
-
-  const decoded = verifyRefreshToken(refreshToken);
-  if (!decoded) {
-    return res.status(403).json({ success: false, message: "Invalid refresh token" });
+  if (!token) {
+    return res.status(401).json({ message: "No token" });
   }
 
   try {
-    const user = await User.findById(decoded.id);
-    if (!user) return res.status(404).json({ success: false, message: "User not found" });
+    const decoded = jwt.verify(token, JWT_SECRET);
 
-    const accessToken = generateAccessToken(user);
-    res.json({ success: true, accessToken });
-  } catch (error) {
-    console.error("[REFRESH ERROR]", error);
-    res.status(500).json({ success: false, message: "Internal server error" });
-  }
-});
+    const user = await User.findById(decoded.id).select("-password");
 
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
 
-// LOGOUT
-router.post("/logout", (req, res) => {
-  res.clearCookie("refreshToken", { ...COOKIE_OPTIONS, maxAge: 0 });
-  res.json({ success: true, message: "Logged out successfully" });
-});
-
-
-// ME (Protected Route)
-router.get("/me", protect, async (req, res) => {
-  try {
-    const user = await User.findById(req.userId).select("-password");
-    if (!user) return res.status(404).json({ success: false, message: "User not found" });
-    res.json({ success: true, user });
+    res.json(user);
   } catch (err) {
-    res.status(500).json({ success: false, message: "Server error" });
+    console.error("ME ROUTE ERROR:", err.message);
+    res.status(401).json({ message: "Invalid token" });
   }
 });
 

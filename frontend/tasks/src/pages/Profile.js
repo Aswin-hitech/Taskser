@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
-import api from "../context/api";
-import { useAuth } from "../context/AuthContext";
-
+import axios from "axios";
+import { useAuth } from "../context/AuthContext"; // Assuming you have this hook
 
 export default function Profile() {
   const [profileData, setProfileData] = useState(null);
@@ -21,31 +20,39 @@ export default function Profile() {
   useEffect(() => {
     const fetchProfileAndStats = async () => {
       try {
-        const profileRes = await api.get("/api/auth/me");
-        if (profileRes.data.success) {
-          setProfileData(profileRes.data.user);
-        }
+        const token = localStorage.getItem("token");
+        
+        // Fetch profile data
+        const profileRes = await axios.get("/api/auth/me", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        
+        // Fetch user statistics
+        const statsRes = await axios.get("/api/stats", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
 
-        const statsRes = await api.get("/api/stats");
-        if (statsRes.data.success) {
-          setStats(statsRes.data.stats);
-        }
+        setProfileData(profileRes.data);
+        setStats(statsRes.data);
       } catch (error) {
-        console.error("Failed to load profile or stats:", error);
+        console.error("Failed to load profile:", error);
+        setProfileData(null);
+        setStats(null);
       } finally {
         setLoading(false);
       }
     };
+    
     fetchProfileAndStats();
   }, []);
 
   // Format time for digital clock
   const formatTime = (date) => {
-    return date.toLocaleTimeString([], {
-      hour: '2-digit',
+    return date.toLocaleTimeString([], { 
+      hour: '2-digit', 
       minute: '2-digit',
       second: '2-digit',
-      hour12: true
+      hour12: true 
     });
   };
 
@@ -109,7 +116,7 @@ export default function Profile() {
             </p>
           </div>
         </div>
-
+        
         <div className="profile-details">
           <div className="detail-item">
             <span className="detail-label">User ID</span>
@@ -126,7 +133,7 @@ export default function Profile() {
       {stats && (
         <div className="stats-section">
           <h3 className="section-title">Your Activity</h3>
-
+          
           <div className="stats-grid">
             <div className="stat-card">
               <div className="stat-icon">📋</div>
@@ -135,7 +142,7 @@ export default function Profile() {
                 <div className="stat-label">Total Tasks</div>
               </div>
             </div>
-
+            
             <div className="stat-card">
               <div className="stat-icon">✅</div>
               <div className="stat-content">
@@ -143,7 +150,7 @@ export default function Profile() {
                 <div className="stat-label">Completed</div>
               </div>
             </div>
-
+            
             <div className="stat-card">
               <div className="stat-icon">📝</div>
               <div className="stat-content">
@@ -151,7 +158,7 @@ export default function Profile() {
                 <div className="stat-label">Notes</div>
               </div>
             </div>
-
+            
             <div className="stat-card">
               <div className="stat-icon">📅</div>
               <div className="stat-content">
@@ -174,7 +181,7 @@ export default function Profile() {
               <span className="activity-time">Just now</span>
             </div>
           </div>
-
+          
           <div className="activity-item">
             <div className="activity-icon">📱</div>
             <div className="activity-content">
@@ -193,12 +200,12 @@ export default function Profile() {
             <span className="action-icon">⚙️</span>
             <span className="action-text">Settings</span>
           </button>
-
+          
           <button className="action-btn" onClick={() => window.location.href = '/dashboard'}>
             <span className="action-icon">📊</span>
             <span className="action-text">Dashboard</span>
           </button>
-
+          
           <button className="action-btn" onClick={() => window.location.href = '/tasks'}>
             <span className="action-icon">➕</span>
             <span className="action-text">New Task</span>

@@ -1,7 +1,6 @@
 import { useContext, useEffect, useState } from "react";
 import { TaskContext } from "../context/TaskContext";
 import { NoteContext } from "../context/NoteContext";
-import { AuthContext } from "../context/AuthContext";
 import AddTaskForm from "../components/AddTaskForm";
 import TaskCard from "../components/TaskCard";
 import ProgressMeter from "../components/ProgressMeter";
@@ -14,10 +13,7 @@ export default function Dashboard() {
     deleteTask,
     checkInHabit,
     resetHabitStreak,
-    updateBulkPriority
   } = useContext(TaskContext);
-
-  const { loading } = useContext(AuthContext);
 
   const { notes } = useContext(NoteContext);
   const [localTasks, setLocalTasks] = useState([]);
@@ -26,9 +22,7 @@ export default function Dashboard() {
   const [notificationEnabled, setNotificationEnabled] = useState(false);
 
   useEffect(() => {
-    // Sort tasks by priority if they exist, otherwise use default order
-    const sortedTasks = [...tasks].sort((a, b) => (a.priority || 0) - (b.priority || 0));
-    setLocalTasks(sortedTasks);
+    setLocalTasks(tasks);
   }, [tasks]);
 
   // Request notification permission on mount
@@ -78,17 +72,9 @@ export default function Dashboard() {
     setLocalTasks(updated);
   };
 
-  const handleDragEnd = async () => {
+  const handleDragEnd = () => {
     setDragIndex(null);
     setIsDragging(false);
-
-    // Persist new order
-    const priorities = localTasks.map((task, index) => ({
-      id: task._id,
-      priority: index
-    }));
-
-    await updateBulkPriority(priorities);
   };
 
   return (
@@ -111,38 +97,28 @@ export default function Dashboard() {
           </div>
         </div>
       </div>
-      {/* Notification Status */}
+     {/* Notification Status */}
       {!notificationEnabled && (
         <div className="notification-warning">
           <p>
-            🔔 Notifications are disabled. Enable them in your browser settings
+            🔔 Notifications are disabled. Enable them in your browser settings 
             to receive task reminders.
           </p>
         </div>
       )}
 
       {/* Progress Meter + Add Task Form Row */}
-      <div className="dashboard-grid">
-        <div className="col-half">
-          <ProgressMeter percentage={percentage} />
-        </div>
-        <div className="col-half">
-          <AddTaskForm />
-        </div>
-      </div>
+      <ProgressMeter percentage={percentage} />
+      <AddTaskForm />
 
       {/* Tasks Section */}
-      <div className={`section tasks col-full ${isDragging ? 'dragging-active' : ''}`}>
+      <div className={`section tasks ${isDragging ? 'dragging-active' : ''}`}>
         <h2>
           <span className="icon">📋</span>
-          Your Tasks
-          {loading ? (
-            <span className="task-count"> (Loading...)</span>
-          ) : (
-            <span className="task-count"> :  {localTasks.length}</span>
-          )}
+          Your Tasks   
+          <span className="task-count"> :  {localTasks.length}</span>
         </h2>
-
+        
         {localTasks.length === 0 ? (
           <div className="empty-state">
             <span className="empty-icon">✨</span>
@@ -176,7 +152,7 @@ export default function Dashboard() {
           <span className="icon">📝</span>
           Recent Notes
         </h2>
-
+        
         {notes.length === 0 ? (
           <div className="empty-state">
             <span className="empty-icon">📄</span>

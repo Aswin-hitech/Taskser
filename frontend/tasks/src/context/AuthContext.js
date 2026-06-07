@@ -1,93 +1,140 @@
 import { createContext, useState, useEffect } from "react";
-import api from "./api";
+import axios from "axios";
 import { jwtDecode } from "jwt-decode";
+
+// Set axios base URL
+axios.defaults.baseURL = process.env.REACT_APP_API_URL || "http://localhost:5000";
 
 export const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [authChecked, setAuthChecked] = useState(false);
+
+  // Function to get token from storage
+  const getToken = () => {
+    return localStorage.getItem("token") || sessionStorage.getItem("token");
+  };
+
+  // Function to set axios default headers
+  const setAuthToken = (token) => {
+    if (token) {
+      axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+    } else {
+      delete axios.defaults.headers.common["Authorization"];
+    }
+  };
 
   useEffect(() => {
     const initializeAuth = async () => {
-      const token = localStorage.getItem("token");
-      if (!token) {
-        setLoading(false);
-        return;
-      }
-
-      try {
-        const res = await api.get("/api/auth/me");
-        if (res.data.success) {
-          setUser(res.data.user);
+      const token = getToken();
+      
+      if (token) {
+        try {
+          const decoded = jwtDecode(token);
+          
+          // Check if token is expired
+          if (decoded.exp * 1000 > Date.now()) {
+            setAuthToken(token);
+            setUser({ id: decoded.id, username: decoded.username });
+          } else {
+            // Token expired, clear it
+            clearAuth();
+          }
+        } catch (error) {
+          console.error("Token decode error:", error);
+          clearAuth();
         }
-      } catch (error) {
-        console.log("[AUTH] Initial session check failed.");
-        setUser(null);
-      } finally {
-        setLoading(false);
       }
+      
+      setAuthChecked(true);
+      setLoading(false);
     };
 
     initializeAuth();
   }, []);
 
-  const login = async (username, password) => {
+  const login = async (username, password, rememberMe) => {
     try {
-      const res = await api.post("/api/auth/login", { username, password });
-      const { accessToken } = res.data;
+      const res = await axios.post("/api/auth/login", {
+        username,
+        password,
+      });
 
-      localStorage.setItem("token", accessToken);
-      const decoded = jwtDecode(accessToken);
+      const token = res.data.token;
+      
+      if (rememberMe) {
+        localStorage.setItem("token", token);
+      } else {
+        sessionStorage.setItem("token", token);
+      }
+      
+      setAuthToken(token);
+      const decoded = jwtDecode(token);
       setUser({ id: decoded.id, username: decoded.username });
-
+      
       return { success: true };
     } catch (error) {
-      return {
-        success: false,
-        message: error.response?.data?.message || "Login failed"
+      console.error("Login error:", error);
+      return { 
+        success: false, 
+        message: error.response?.data?.message || "Login failed" 
       };
     }
   };
 
   const register = async (username, password) => {
     try {
-      const res = await api.post("/api/auth/register", { username, password });
-      const { accessToken } = res.data;
-
-      localStorage.setItem("token", accessToken);
-      const decoded = jwtDecode(accessToken);
-      setUser({ id: decoded.id, username: decoded.username });
-
+      await axios.post("/api/auth/register", { username, password });
       return { success: true };
     } catch (error) {
-      return {
-        success: false,
-        message: error.response?.data?.message || "Registration failed"
+      console.error("Register error:", error);
+      return { 
+        success: false, 
+        message: error.response?.data?.message || "Registration failed" 
       };
     }
   };
 
-  const logout = async () => {
+  const logout = () => {
+    clearAuth();
+  };
+
+  const clearAuth = () => {
+    localStorage.removeItem("token");
+    sessionStorage.removeItem("token");
+    setAuthToken(null);
+    setUser(null);
+  };
+
+  const isAuthenticated = () => {
+    const token = getToken();
+    if (!token) return false;
+    
     try {
-      await api.post("/api/auth/logout");
-    } catch (err) {
-      console.error("Logout failed", err);
-    } finally {
-      localStorage.removeItem("token");
-      setUser(null);
+      const decoded = jwtDecode(token);
+      return decoded.exp * 1000 > Date.now();
+    } catch {
+      return false;
     }
+  };
+
+  const getAuthToken = () => {
+    return getToken();
   };
 
   return (
     <AuthContext.Provider
-      value={{
-        user,
-        loading,
-        login,
-        register,
+      value={{ 
+        user, 
+        loading, 
+        authChecked,
+        login, 
+        register, 
         logout,
-        isAuthenticated: !!user,
+        isAuthenticated,
+        getAuthToken
       }}
     >
       {children}

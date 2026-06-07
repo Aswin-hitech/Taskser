@@ -1,62 +1,60 @@
 const express = require("express");
+const jwt = require("jsonwebtoken");
 const Checklist = require("../models/CheckList");
-const protect = require("../middleware/protect");
 
 const router = express.Router();
+const JWT_SECRET = "mysecretkey";
+
+const getUserId = (req) => {
+  const auth = req.headers.authorization;
+  if (!auth) return null;
+  try {
+    return jwt.verify(auth.split(" ")[1], JWT_SECRET).id;
+  } catch {
+    return null;
+  }
+};
 
 /* GET ALL LISTS */
-router.get("/", protect, async (req, res) => {
-  try {
-    const lists = await Checklist.find({ user: req.userId });
-    res.json({ success: true, lists });
-  } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
-  }
+router.get("/", async (req, res) => {
+  const userId = getUserId(req);
+  if (!userId) return res.status(401).json({ msg: "Unauthorized" });
+
+  const lists = await Checklist.find({ user: userId });
+  res.json(lists);
 });
 
 /* CREATE LIST */
-router.post("/", protect, async (req, res) => {
-  try {
-    const { title } = req.body;
-    if (!title) return res.status(400).json({ success: false, message: "Title required" });
+router.post("/", async (req, res) => {
+  const userId = getUserId(req);
+  if (!userId) return res.status(401).json({ msg: "Unauthorized" });
 
-    const list = await Checklist.create({
-      user: req.userId,
-      title,
-      items: [],
-    });
+  const list = await Checklist.create({
+    user: userId,
+    title: req.body.title,
+    items: [],
+  });
 
-    res.status(201).json({ success: true, list });
-  } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
-  }
+  res.status(201).json(list);
 });
 
 /* UPDATE LIST */
-router.put("/:id", protect, async (req, res) => {
-  try {
-    const list = await Checklist.findOneAndUpdate(
-      { _id: req.params.id, user: req.userId },
-      req.body,
-      { new: true }
-    );
+router.put("/:id", async (req, res) => {
+  const userId = getUserId(req);
+  const list = await Checklist.findOneAndUpdate(
+    { _id: req.params.id, user: userId },
+    req.body,
+    { new: true }
+  );
 
-    if (!list) return res.status(404).json({ success: false, message: "Checklist not found" });
-    res.json({ success: true, list });
-  } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
-  }
+  res.json(list);
 });
 
 /* DELETE LIST */
-router.delete("/:id", protect, async (req, res) => {
-  try {
-    const result = await Checklist.deleteOne({ _id: req.params.id, user: req.userId });
-    if (result.deletedCount === 0) return res.status(404).json({ success: false, message: "Checklist not found" });
-    res.json({ success: true, message: "Deleted" });
-  } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
-  }
+router.delete("/:id", async (req, res) => {
+  const userId = getUserId(req);
+  await Checklist.deleteOne({ _id: req.params.id, user: userId });
+  res.json({ msg: "Deleted" });
 });
 
 module.exports = router;
