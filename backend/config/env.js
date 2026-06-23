@@ -45,6 +45,8 @@ const config = {
   refreshTokenTtl: process.env.REFRESH_TOKEN_TTL || "7d",
   bcryptRounds: Number(process.env.BCRYPT_ROUNDS) || 10,
   cookieName: process.env.REFRESH_COOKIE_NAME || "taskser_refresh",
+  contestSyncCron: process.env.CONTEST_SYNC_CRON || "*/30 * * * *",
+  contestReminderCron: process.env.CONTEST_REMINDER_CRON || "* * * * *",
   isValid:
     !!getSecret("ACCESS_TOKEN_SECRET", "JWT_SECRET") &&
     !!getSecret("REFRESH_TOKEN_SECRET", "JWT_REFRESH_SECRET") &&

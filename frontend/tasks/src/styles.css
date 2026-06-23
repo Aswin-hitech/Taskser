@@ -359,7 +359,8 @@ form.add-task-form {
 .tasks-grid,
 .notes-list,
 .checklist-items,
-.actions-grid {
+.actions-grid,
+.contest-grid {
   display: grid;
   gap: 18px;
 }
@@ -960,6 +961,146 @@ button.danger,
   box-shadow: none;
 }
 
+.contest-overview {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.contest-next-label {
+  font-size: 1.2rem;
+  font-weight: 800;
+  text-transform: capitalize;
+}
+
+.contest-toolbar {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.contest-filter-group,
+.contest-toolbar-actions {
+  display: flex;
+  align-items: flex-end;
+  gap: 16px;
+}
+
+.contest-toolbar .field-group {
+  min-width: 190px;
+}
+
+.contest-list-section {
+  padding: clamp(22px, 3vw, 34px);
+}
+
+.contest-grid {
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+}
+
+.contest-card {
+  padding: 22px;
+  display: grid;
+  gap: 18px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+}
+
+.contest-card-top,
+.contest-platform-row,
+.contest-meta-grid,
+.contest-reminders {
+  display: flex;
+  gap: 12px;
+}
+
+.contest-card-top {
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.contest-platform-row {
+  align-items: center;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+
+.contest-platform {
+  padding: 5px 10px;
+  border-radius: 999px;
+  font-size: 0.76rem;
+  font-weight: 900;
+  text-transform: capitalize;
+}
+
+.platform-leetcode {
+  background: rgba(255, 161, 67, 0.18);
+  color: #ffb55d;
+}
+
+.platform-codeforces {
+  background: rgba(106, 168, 255, 0.18);
+  color: #9cc2ff;
+}
+
+.platform-codechef {
+  background: rgba(173, 132, 93, 0.24);
+  color: #dfbe98;
+}
+
+.platform-atcoder {
+  background: rgba(72, 212, 180, 0.18);
+  color: var(--accent);
+}
+
+.contest-time-remaining,
+.contest-meta-label {
+  color: var(--muted);
+  font-size: 0.86rem;
+  font-weight: 700;
+}
+
+.contest-title {
+  margin-bottom: 0;
+  font-size: 1.1rem;
+}
+
+.contest-meta-grid {
+  justify-content: space-between;
+}
+
+.contest-meta-grid > div {
+  display: grid;
+  gap: 6px;
+}
+
+.contest-reminders {
+  flex-wrap: wrap;
+}
+
+.contest-reminder-chip,
+.contest-favorite-btn {
+  min-height: 38px;
+  padding: 8px 12px;
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--border);
+  box-shadow: none;
+}
+
+.contest-reminder-chip.is-active,
+.contest-favorite-btn.is-active {
+  color: #07100d;
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+}
+
+.contest-link {
+  color: var(--accent);
+  font-weight: 800;
+  text-decoration: none;
+}
+
 .sound-settings {
   margin-top: 18px;
 }
@@ -1031,9 +1172,18 @@ button.danger,
 
   .notification-controls-bar,
   .notification-footer,
-  .note-header {
+  .note-header,
+  .contest-toolbar,
+  .contest-filter-group,
+  .contest-toolbar-actions,
+  .contest-card-top,
+  .contest-meta-grid {
     align-items: flex-start;
     flex-direction: column;
+  }
+
+  .contest-overview {
+    grid-template-columns: 1fr;
   }
 }
 

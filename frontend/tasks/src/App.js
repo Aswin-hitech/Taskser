@@ -23,6 +23,7 @@ import Notifications from "./pages/Notifications";
 import Settings from "./pages/Settings";
 import Profile from "./pages/Profile";
 import Checklists from "./pages/Checklists";
+import ContestTracker from "./pages/ContestTracker";
 
 export default function App() {
   return (
@@ -47,6 +48,7 @@ export default function App() {
                   <Route path="/dashboard" element={<Dashboard />} />
                   <Route path="/calendar" element={<CalendarView />} />
                   <Route path="/notes" element={<Notes />} />
+                  <Route path="/contests" element={<ContestTracker />} />
                   <Route path="/notifications" element={<Notifications />} />
                   <Route path="/checklists" element={<Checklists />} />
                   <Route path="/settings" element={<Settings />} />

@@ -11,6 +11,10 @@ const notificationSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "Task",
     },
+    contest: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Contest",
+    },
     type: {
       type: String,
       enum: [
@@ -20,6 +24,9 @@ const notificationSchema = new mongoose.Schema(
         "due_now",
         "overdue",
         "reminder",
+        "contest_24h",
+        "contest_1h",
+        "contest_15m",
       ],
       required: true,
     },

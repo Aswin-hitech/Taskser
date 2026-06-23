@@ -11,8 +11,11 @@ const taskRoutes = require("./routes/tasks");
 const notificationRoutes = require("./routes/notifications");
 const checklistRoutes = require("./routes/checklists");
 const statsRoutes = require("./routes/stats");
+const contestRoutes = require("./routes/contests");
 const connectDB = require("./config/db");
 const { notFound, errorHandler } = require("./middleware/errorHandlers");
+const startContestJobs = require("./jobs/contestSyncJob");
+const { syncContests } = require("./services/contestService");
 
 const diag = config.getDiagnostics();
 console.log("-----------------------------------------");
@@ -78,6 +81,7 @@ app.use("/api/notes", noteRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/checklists", checklistRoutes);
 app.use("/api/stats", statsRoutes);
+app.use("/api/contests", contestRoutes);
 
 app.use(notFound);
 app.use(errorHandler);
@@ -85,6 +89,10 @@ app.use(errorHandler);
 const startServer = async () => {
   try {
     await connectDB();
+    startContestJobs();
+    syncContests().catch((error) => {
+      console.error("[INITIAL CONTEST SYNC]", error.message);
+    });
     app.listen(config.port, "0.0.0.0", () => {
       console.log(`Server running on port ${config.port}`);
     });
