@@ -7,8 +7,8 @@ Taskser is a full-stack task, notes, checklist, and reminder application built w
 
 ## Local setup
 
-1. Copy [backend/.env.example](/D:/Aswin%20Projects/Taskser/backend/.env.example) to `backend/.env` and set your MongoDB connection plus JWT secrets.
-2. Copy [frontend/tasks/.env.example](/D:/Aswin%20Projects/Taskser/frontend/tasks/.env.example) to `frontend/tasks/.env`.
+1. Create `backend/.env` and set your MongoDB connection plus JWT secrets.
+2. Create `frontend/tasks/.env` if you need a custom API URL.
 3. Install dependencies in both `backend` and `frontend/tasks`.
 4. Start the backend with `npm run dev` from `backend`.
 5. Start the frontend with `npm start` from `frontend/tasks`.
