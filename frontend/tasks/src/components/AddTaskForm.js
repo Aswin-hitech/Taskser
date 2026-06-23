@@ -1,40 +1,36 @@
-import { useState, useContext } from "react";
+import { useContext, useState } from "react";
 import { TaskContext } from "../context/TaskContext";
 
 export default function AddTaskForm() {
   const { addTask } = useContext(TaskContext);
-
   const [description, setDescription] = useState("");
   const [type, setType] = useState("daily");
-
-  // For scheduled tasks
   const [hasDate, setHasDate] = useState(false);
   const [date, setDate] = useState("");
   const [hasTime, setHasTime] = useState(false);
   const [time, setTime] = useState("");
-
-  // For daily habits
   const [reminder, setReminder] = useState(false);
   const [reminderTime, setReminderTime] = useState("");
+  const [error, setError] = useState("");
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!description.trim()) return;
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    setError("");
 
-    await addTask({
+    const result = await addTask({
       description,
       type,
-      
-      // Scheduled task data
       date: type === "scheduled" && hasDate ? date : undefined,
-      time: type === "scheduled" && hasTime ? time : undefined, // ADD THIS
-      
-      // Daily habit reminder
+      time: type === "scheduled" && hasTime ? time : undefined,
       reminder: type === "daily" ? reminder : false,
       reminderTime: type === "daily" && reminder ? reminderTime : undefined,
     });
 
-    // Reset form
+    if (!result.success) {
+      setError(result.message);
+      return;
+    }
+
     setDescription("");
     setHasDate(false);
     setDate("");
@@ -43,94 +39,100 @@ export default function AddTaskForm() {
     setReminder(false);
     setReminderTime("");
   };
-  
+
   return (
-  <form onSubmit={handleSubmit} className="add-task-form">
-    {/* TASK DESCRIPTION */}
-    <input
-      type="text"
-      placeholder="What needs to be done?"
-      value={description}
-      onChange={(e) => setDescription(e.target.value)}
-      required
-    />
-
-    {/* TASK TYPE */}
-    <select value={type} onChange={(e) => setType(e.target.value)}>
-      <option value="daily">Daily / Habit</option>
-      <option value="scheduled">Scheduled / Event</option>
-    </select>
-
-    {/* DAILY REMINDER */}
-    {type === "daily" && (
-      <div className="task-options-row">
-        <label className="task-option checkbox-option">
-          <input
-            type="checkbox"
-            checked={reminder}
-            onChange={(e) => setReminder(e.target.checked)}
-          />
-          <span>Enable reminder</span>
-        </label>
-
-        <div className="task-option">
-          <label>Reminder time</label>
-          <input
-            type="time"
-            value={reminderTime}
-            onChange={(e) => setReminderTime(e.target.value)}
-            disabled={!reminder}
-          />
-        </div>
+    <form onSubmit={handleSubmit} className="add-task-form">
+      <div className="section-header">
+        <h2>Add something new</h2>
       </div>
-    )}
 
-    {/* SCHEDULED TASK */}
-    {type === "scheduled" && (
-      <div className="task-options-row">
-        {/* DATE */}
-        <label className="task-option checkbox-option">
-          <input
-            type="checkbox"
-            checked={hasDate}
-            onChange={(e) => setHasDate(e.target.checked)}
-          />
-          <span>Add due date</span>
-        </label>
+      <label className="field-group">
+        <span>Description</span>
+        <input
+          type="text"
+          placeholder="What needs to be done?"
+          value={description}
+          onChange={(event) => setDescription(event.target.value)}
+          required
+        />
+      </label>
 
-        <div className="task-option">
-          <label>Date</label>
-          <input
-            type="date"
-            value={date}
-            onChange={(e) => setDate(e.target.value)}
-            disabled={!hasDate}
-          />
+      <label className="field-group">
+        <span>Task type</span>
+        <select value={type} onChange={(event) => setType(event.target.value)}>
+          <option value="daily">Daily habit</option>
+          <option value="scheduled">Scheduled task</option>
+        </select>
+      </label>
+
+      {type === "daily" && (
+        <div className="task-options-row">
+          <label className="task-option checkbox-option">
+            <input
+              type="checkbox"
+              checked={reminder}
+              onChange={(event) => setReminder(event.target.checked)}
+            />
+            <span>Enable daily reminder</span>
+          </label>
+
+          <label className="task-option">
+            <span>Reminder time</span>
+            <input
+              type="time"
+              value={reminderTime}
+              onChange={(event) => setReminderTime(event.target.value)}
+              disabled={!reminder}
+            />
+          </label>
         </div>
+      )}
 
-        {/* TIME */}
-        <label className="task-option checkbox-option">
-          <input
-            type="checkbox"
-            checked={hasTime}
-            onChange={(e) => setHasTime(e.target.checked)}
-          />
-          <span>Add time</span>
-        </label>
+      {type === "scheduled" && (
+        <div className="task-options-row">
+          <label className="task-option checkbox-option">
+            <input
+              type="checkbox"
+              checked={hasDate}
+              onChange={(event) => setHasDate(event.target.checked)}
+            />
+            <span>Add due date</span>
+          </label>
 
-        <div className="task-option">
-          <label>Time</label>
-          <input
-            type="time"
-            value={time}
-            onChange={(e) => setTime(e.target.value)}
-            disabled={!hasTime}
-          />
+          <label className="task-option">
+            <span>Date</span>
+            <input
+              type="date"
+              value={date}
+              onChange={(event) => setDate(event.target.value)}
+              disabled={!hasDate}
+            />
+          </label>
+
+          <label className="task-option checkbox-option">
+            <input
+              type="checkbox"
+              checked={hasTime}
+              onChange={(event) => setHasTime(event.target.checked)}
+            />
+            <span>Add time</span>
+          </label>
+
+          <label className="task-option">
+            <span>Time</span>
+            <input
+              type="time"
+              value={time}
+              onChange={(event) => setTime(event.target.value)}
+              disabled={!hasTime}
+            />
+          </label>
         </div>
-      </div>
-    )}
+      )}
 
-    <button type="submit">Add Task</button>
-  </form>
-);
+      {error ? <p className="form-error">{error}</p> : null}
+
+      <button type="submit">Add Task</button>
+    </form>
+  );
 }

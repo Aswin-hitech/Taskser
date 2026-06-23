@@ -1,13 +1,18 @@
 const mongoose = require("mongoose");
+const config = require("./env");
 
 const connectDB = async () => {
-  try {
-    await mongoose.connect(process.env.MONGO_URI);
-    console.log("MongoDB connected successfully");
-  } catch (error) {
-    console.error("MongoDB connection failed:", error.message);
-    process.exit(1);
+  if (!config.mongoUri) {
+    throw new Error("MONGO_URI is not configured.");
   }
+
+  mongoose.set("strictQuery", true);
+
+  await mongoose.connect(config.mongoUri, {
+    serverSelectionTimeoutMS: 10000,
+  });
+
+  console.log("MongoDB connected successfully");
 };
 
 module.exports = connectDB;

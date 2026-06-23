@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import api from "../context/api";
 
 export default function Profile() {
@@ -6,8 +7,8 @@ export default function Profile() {
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [currentTime, setCurrentTime] = useState(new Date());
+  const navigate = useNavigate();
 
-  // Live clock update
   useEffect(() => {
     const timer = setInterval(() => {
       setCurrentTime(new Date());
@@ -19,8 +20,10 @@ export default function Profile() {
   useEffect(() => {
     const fetchProfileAndStats = async () => {
       try {
-        const profileRes = await api.get("/api/auth/me");
-        const statsRes = await api.get("/api/stats");
+        const [profileRes, statsRes] = await Promise.all([
+          api.get("/api/auth/me"),
+          api.get("/api/stats"),
+        ]);
 
         setProfileData(profileRes.data.user);
         setStats(statsRes.data.stats);
@@ -32,35 +35,14 @@ export default function Profile() {
         setLoading(false);
       }
     };
-    
+
     fetchProfileAndStats();
   }, []);
-
-  // Format time for digital clock
-  const formatTime = (date) => {
-    return date.toLocaleTimeString([], { 
-      hour: '2-digit', 
-      minute: '2-digit',
-      second: '2-digit',
-      hour12: true 
-    });
-  };
-
-  // Format date
-  const formatDate = (date) => {
-    return date.toLocaleDateString([], {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    });
-  };
 
   if (loading) {
     return (
       <div className="page-container">
-        <div className="loading-profile">
-          <div className="loading-spinner"></div>
+        <div className="loading-state">
           <p>Loading profile...</p>
         </div>
       </div>
@@ -70,10 +52,10 @@ export default function Profile() {
   if (!profileData) {
     return (
       <div className="page-container">
-        <div className="error-profile">
-          <h2>⚠️</h2>
-          <p>Failed to load profile data</p>
-          <button onClick={() => window.location.reload()} className="retry-btn">
+        <div className="empty-state">
+          <h2>Profile unavailable</h2>
+          <p>We could not load your profile data right now.</p>
+          <button onClick={() => window.location.reload()} className="retry-btn" type="button">
             Retry
           </button>
         </div>
@@ -85,20 +67,30 @@ export default function Profile() {
     <div className="page-container profile-page">
       <h1 className="profile-title">Profile</h1>
 
-      {/* Digital Clock Section */}
       <div className="digital-clock-container">
         <div className="digital-clock">
-          <div className="time-display">{formatTime(currentTime)}</div>
-          <div className="date-display">{formatDate(currentTime)}</div>
+          <div className="time-display">
+            {currentTime.toLocaleTimeString([], {
+              hour: "2-digit",
+              minute: "2-digit",
+              second: "2-digit",
+              hour12: true,
+            })}
+          </div>
+          <div className="date-display">
+            {currentTime.toLocaleDateString([], {
+              weekday: "long",
+              year: "numeric",
+              month: "long",
+              day: "numeric",
+            })}
+          </div>
         </div>
       </div>
 
-      {/* User Info Card */}
       <div className="profile-card primary-card">
         <div className="profile-header">
-          <div className="avatar">
-            {profileData.username.charAt(0).toUpperCase()}
-          </div>
+          <div className="avatar">{profileData.username.charAt(0).toUpperCase()}</div>
           <div className="profile-info">
             <h2 className="username">{profileData.username}</h2>
             <p className="member-since">
@@ -106,7 +98,7 @@ export default function Profile() {
             </p>
           </div>
         </div>
-        
+
         <div className="profile-details">
           <div className="detail-item">
             <span className="detail-label">User ID</span>
@@ -119,86 +111,74 @@ export default function Profile() {
         </div>
       </div>
 
-      {/* Statistics Section */}
-      {stats && (
+      {stats ? (
         <div className="stats-section">
-          <h3 className="section-title">Your Activity</h3>
-          
+          <h2 className="section-title">Your Activity</h2>
+
           <div className="stats-grid">
             <div className="stat-card">
-              <div className="stat-icon">📋</div>
               <div className="stat-content">
                 <div className="stat-value">{stats.totalTasks || 0}</div>
                 <div className="stat-label">Total Tasks</div>
               </div>
             </div>
-            
+
             <div className="stat-card">
-              <div className="stat-icon">✅</div>
               <div className="stat-content">
                 <div className="stat-value">{stats.completedTasks || 0}</div>
                 <div className="stat-label">Completed</div>
               </div>
             </div>
-            
+
             <div className="stat-card">
-              <div className="stat-icon">📝</div>
               <div className="stat-content">
                 <div className="stat-value">{stats.totalNotes || 0}</div>
                 <div className="stat-label">Notes</div>
               </div>
             </div>
-            
+
             <div className="stat-card">
-              <div className="stat-icon">📅</div>
               <div className="stat-content">
                 <div className="stat-value">{stats.activeStreak || 0}</div>
-                <div className="stat-label">Day Streak</div>
+                <div className="stat-label">Best Current Streak</div>
               </div>
             </div>
           </div>
         </div>
-      )}
+      ) : null}
 
-      {/* Recent Activity */}
       <div className="activity-section">
-        <h3 className="section-title">Recent Activity</h3>
+        <h2 className="section-title">Recent Activity</h2>
         <div className="activity-list">
           <div className="activity-item">
-            <div className="activity-icon">🕒</div>
             <div className="activity-content">
-              <p>Last login: Today</p>
-              <span className="activity-time">Just now</span>
+              <p>Last session refreshed successfully</p>
+              <span className="activity-time">Current session</span>
             </div>
           </div>
-          
+
           <div className="activity-item">
-            <div className="activity-icon">📱</div>
             <div className="activity-content">
-              <p>Currently using: Web App</p>
-              <span className="activity-time">This session</span>
+              <p>Workspace synced with your latest stats</p>
+              <span className="activity-time">Just now</span>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Quick Actions */}
       <div className="actions-section">
-        <h3 className="section-title">Quick Actions</h3>
+        <h2 className="section-title">Quick Actions</h2>
         <div className="actions-grid">
-          <button className="action-btn" onClick={() => window.location.href = '/settings'}>
-            <span className="action-icon">⚙️</span>
+          <button className="action-btn" onClick={() => navigate("/settings")} type="button">
             <span className="action-text">Settings</span>
           </button>
-          
-          <button className="action-btn" onClick={() => window.location.href = '/dashboard'}>
-            <span className="action-icon">📊</span>
+
+          <button className="action-btn" onClick={() => navigate("/dashboard")} type="button">
             <span className="action-text">Dashboard</span>
           </button>
-          
-          <button className="action-btn" onClick={() => window.location.href = '/dashboard'}>
-            <span className="action-icon">➕</span>
-            <span className="action-text">New Task</span>
+
+          <button className="action-btn" onClick={() => navigate("/notes")} type="button">
+            <span className="action-text">Notes</span>
           </button>
         </div>
       </div>

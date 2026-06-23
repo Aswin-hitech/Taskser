@@ -1,130 +1,120 @@
-import { createContext, useState, useEffect, useCallback } from "react";
-import axios from "axios";
-import { jwtDecode } from "jwt-decode";
-
-axios.defaults.baseURL = process.env.REACT_APP_API_URL || "http://localhost:5000";
+import { createContext, useCallback, useEffect, useMemo, useState } from "react";
+import api, {
+  clearAccessToken,
+  refreshSession,
+  setAccessToken,
+  setAuthFailureHandler,
+} from "./api";
 
 export const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [authChecked, setAuthChecked] = useState(false);
-
-  const getToken = useCallback(() => {
-    return localStorage.getItem("token") || sessionStorage.getItem("token");
-  }, []);
-
-  const setAuthToken = useCallback((token) => {
-    if (token) {
-      axios.defaults.headers.common.Authorization = `Bearer ${token}`;
-    } else {
-      delete axios.defaults.headers.common.Authorization;
-    }
-  }, []);
 
   const clearAuth = useCallback(() => {
-    localStorage.removeItem("token");
-    sessionStorage.removeItem("token");
-    setAuthToken(null);
+    clearAccessToken();
     setUser(null);
-  }, [setAuthToken]);
+  }, []);
+
+  const initializeAuth = useCallback(async () => {
+    try {
+      const session = await refreshSession();
+      setUser(session.user || null);
+    } catch (error) {
+      clearAuth();
+    } finally {
+      setLoading(false);
+    }
+  }, [clearAuth]);
 
   useEffect(() => {
-    const initializeAuth = async () => {
-      const token = getToken();
-
-      if (token) {
-        try {
-          const decoded = jwtDecode(token);
-
-          if (decoded.exp * 1000 > Date.now()) {
-            setAuthToken(token);
-            setUser({ id: decoded.id, username: decoded.username });
-          } else {
-            clearAuth();
-          }
-        } catch (error) {
-          console.error("Token decode error:", error);
-          clearAuth();
-        }
-      }
-
-      setAuthChecked(true);
-      setLoading(false);
-    };
-
+    setAuthFailureHandler(() => clearAuth);
     initializeAuth();
-  }, [clearAuth, getToken, setAuthToken]);
 
-  const login = async (username, password, rememberMe) => {
+    return () => {
+      setAuthFailureHandler(null);
+    };
+  }, [clearAuth, initializeAuth]);
+
+  const login = useCallback(async (username, password, rememberMe) => {
     try {
-      const res = await axios.post("/api/auth/login", { username, password });
-      const token = res.data.accessToken;
+      const res = await api.post("/api/auth/login", {
+        username,
+        password,
+        rememberMe,
+      });
 
-      if (rememberMe) {
-        localStorage.setItem("token", token);
-      } else {
-        sessionStorage.setItem("token", token);
-      }
-
-      setAuthToken(token);
-      const decoded = jwtDecode(token);
-      setUser({ id: decoded.id, username: decoded.username });
+      setAccessToken(res.data.accessToken);
+      setUser(res.data.user);
 
       return { success: true };
     } catch (error) {
-      console.error("Login error:", error);
       return {
         success: false,
         message: error.response?.data?.message || "Login failed",
       };
     }
-  };
+  }, []);
 
-  const register = async (username, password) => {
+  const register = useCallback(async (username, password, rememberMe) => {
     try {
-      await axios.post("/api/auth/register", { username, password });
+      const res = await api.post("/api/auth/register", {
+        username,
+        password,
+        rememberMe,
+      });
+
+      setAccessToken(res.data.accessToken);
+      setUser(res.data.user);
+
       return { success: true };
     } catch (error) {
-      console.error("Register error:", error);
       return {
         success: false,
         message: error.response?.data?.message || "Registration failed",
       };
     }
-  };
+  }, []);
 
-  const logout = () => {
-    clearAuth();
-  };
-
-  const isAuthenticated = () => {
-    const token = getToken();
-    if (!token) return false;
-
+  const logout = useCallback(async () => {
     try {
-      const decoded = jwtDecode(token);
-      return decoded.exp * 1000 > Date.now();
-    } catch {
-      return false;
+      await api.post("/api/auth/logout");
+    } catch (error) {
+      // Ignore logout transport failures and still clear client state.
+    } finally {
+      clearAuth();
     }
-  };
+  }, [clearAuth]);
 
-  return (
-    <AuthContext.Provider
-      value={{
-        user,
-        loading,
-        authChecked,
-        login,
-        register,
-        logout,
-        isAuthenticated,
-        getAuthToken: getToken,
-      }}
-    >
-      {children}
-    </AuthContext.Provider>
+  const deleteAccount = useCallback(
+    async (password) => {
+      try {
+        await api.delete("/api/auth/account", { data: { password } });
+        clearAuth();
+        return { success: true };
+      } catch (error) {
+        return {
+          success: false,
+          message: error.response?.data?.message || "Account deletion failed",
+        };
+      }
+    },
+    [clearAuth]
   );
+
+  const value = useMemo(
+    () => ({
+      user,
+      loading,
+      login,
+      register,
+      logout,
+      deleteAccount,
+      isAuthenticated: Boolean(user),
+    }),
+    [user, loading, login, register, logout, deleteAccount]
+  );
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };

@@ -1,9 +1,9 @@
 import {
   BrowserRouter as Router,
-  Routes,
-  Route,
   Navigate,
   Outlet,
+  Route,
+  Routes,
 } from "react-router-dom";
 import { useContext } from "react";
 
@@ -30,14 +30,20 @@ export default function App() {
       <TaskProvider>
         <NoteProvider>
           <ChecklistProvider>
-            <Router>
+            <Router
+              future={{
+                v7_startTransition: true,
+                v7_relativeSplatPath: true,
+              }}
+            >
               <Routes>
-                {/* Public routes */}
-                <Route path="/login" element={<Login />} />
-                <Route path="/register" element={<Register />} />
+                <Route element={<PublicOnlyRoute />}>
+                  <Route path="/login" element={<Login />} />
+                  <Route path="/register" element={<Register />} />
+                </Route>
 
-                {/* Protected routes */}
                 <Route element={<ProtectedLayout />}>
+                  <Route path="/" element={<Navigate to="/dashboard" replace />} />
                   <Route path="/dashboard" element={<Dashboard />} />
                   <Route path="/calendar" element={<CalendarView />} />
                   <Route path="/notes" element={<Notes />} />
@@ -47,9 +53,7 @@ export default function App() {
                   <Route path="/profile" element={<Profile />} />
                 </Route>
 
-                {/* Default */}
-                <Route path="/" element={<Navigate to="/login" replace />} />
-                <Route path="*" element={<Navigate to="/login" replace />} />
+                <Route path="*" element={<Navigate to="/" replace />} />
               </Routes>
             </Router>
           </ChecklistProvider>
@@ -62,15 +66,34 @@ export default function App() {
 function ProtectedLayout() {
   const { user, loading } = useContext(AuthContext);
 
-  if (loading) return null;
-  if (!user) return <Navigate to="/login" replace />;
+  if (loading) {
+    return <div className="page-status">Loading your workspace...</div>;
+  }
+
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
 
   return (
     <>
       <Navbar />
-      <main className="page-container">
+      <main>
         <Outlet />
       </main>
     </>
   );
+}
+
+function PublicOnlyRoute() {
+  const { user, loading } = useContext(AuthContext);
+
+  if (loading) {
+    return <div className="page-status">Checking your session...</div>;
+  }
+
+  if (user) {
+    return <Navigate to="/dashboard" replace />;
+  }
+
+  return <Outlet />;
 }

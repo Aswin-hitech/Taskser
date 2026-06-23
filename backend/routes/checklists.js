@@ -1,61 +1,100 @@
 const express = require("express");
 const Checklist = require("../models/CheckList");
 const protect = require("../middleware/protect");
+const { sanitizeText, validateObjectIdParam } = require("../utils/validation");
 
 const router = express.Router();
 
-/* GET ALL LISTS */
 router.get("/", protect, async (req, res) => {
   try {
-    const lists = await Checklist.find({ user: req.userId });
-    res.json({ success: true, lists });
+    const lists = await Checklist.find({ user: req.userId }).sort({ updatedAt: -1 });
+    return res.json({ success: true, lists });
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
+    return res.status(500).json({ success: false, message: err.message });
   }
 });
 
-/* CREATE LIST */
 router.post("/", protect, async (req, res) => {
   try {
-    const { title } = req.body;
-    if (!title) return res.status(400).json({ success: false, message: "Title required" });
+    const cleanTitle = sanitizeText(req.body.title);
+    if (!cleanTitle) {
+      return res.status(400).json({ success: false, message: "Title required" });
+    }
 
     const list = await Checklist.create({
       user: req.userId,
-      title,
+      title: cleanTitle,
       items: [],
     });
 
-    res.status(201).json({ success: true, list });
+    return res.status(201).json({ success: true, list });
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
+    return res.status(500).json({ success: false, message: err.message });
   }
 });
 
-/* UPDATE LIST */
 router.put("/:id", protect, async (req, res) => {
   try {
+    const idError = validateObjectIdParam(req.params.id, "Checklist");
+    if (idError) {
+      return res.status(400).json({ success: false, message: idError });
+    }
+
+    const update = {};
+
+    if (req.body.title !== undefined) {
+      const cleanTitle = sanitizeText(req.body.title);
+      if (!cleanTitle) {
+        return res.status(400).json({ success: false, message: "Title cannot be empty" });
+      }
+      update.title = cleanTitle;
+    }
+
+    if (req.body.items !== undefined) {
+      if (!Array.isArray(req.body.items)) {
+        return res.status(400).json({ success: false, message: "Items must be an array" });
+      }
+
+      update.items = req.body.items
+        .map((item, index) => ({
+          text: sanitizeText(item.text),
+          completed: Boolean(item.completed),
+          priority: Number.isInteger(item.priority) ? item.priority : index,
+        }))
+        .filter((item) => item.text);
+    }
+
     const list = await Checklist.findOneAndUpdate(
       { _id: req.params.id, user: req.userId },
-      req.body,
+      update,
       { new: true }
     );
 
-    if (!list) return res.status(404).json({ success: false, message: "Checklist not found" });
-    res.json({ success: true, list });
+    if (!list) {
+      return res.status(404).json({ success: false, message: "Checklist not found" });
+    }
+
+    return res.json({ success: true, list });
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
+    return res.status(500).json({ success: false, message: err.message });
   }
 });
 
-/* DELETE LIST */
 router.delete("/:id", protect, async (req, res) => {
   try {
+    const idError = validateObjectIdParam(req.params.id, "Checklist");
+    if (idError) {
+      return res.status(400).json({ success: false, message: idError });
+    }
+
     const result = await Checklist.deleteOne({ _id: req.params.id, user: req.userId });
-    if (result.deletedCount === 0) return res.status(404).json({ success: false, message: "Checklist not found" });
-    res.json({ success: true, message: "Deleted" });
+    if (result.deletedCount === 0) {
+      return res.status(404).json({ success: false, message: "Checklist not found" });
+    }
+
+    return res.json({ success: true, message: "Deleted" });
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
+    return res.status(500).json({ success: false, message: err.message });
   }
 });
 

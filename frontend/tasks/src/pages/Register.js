@@ -1,49 +1,83 @@
-import { useState, useContext } from "react";
+import { useContext, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 
 export default function Register() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [rememberMe, setRememberMe] = useState(
+    localStorage.getItem("rememberMePreference") !== "false"
+  );
+  const [error, setError] = useState("");
+  const [submitting, setSubmitting] = useState(false);
   const { register } = useContext(AuthContext);
   const navigate = useNavigate();
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    try {
-      await register(username, password);
-      navigate("/login");
-    } catch {
-      alert("Registration failed");
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    setSubmitting(true);
+    setError("");
+
+    const result = await register(username, password, rememberMe);
+
+    if (result.success) {
+      navigate("/dashboard");
+    } else {
+      setError(result.message);
     }
+
+    setSubmitting(false);
   };
 
   return (
     <div className="auth-page">
       <div className="auth-container">
         <div className="auth-header">
-          <h2 className="auth-title">Create Account</h2>
-          <h4 className="auth-subtitle">Start planning with Taskser</h4>
+          <h1 className="auth-title">Create account</h1>
+          <p className="auth-subtitle">Set up a secure Taskser workspace in a minute.</p>
         </div>
-      <form onSubmit={handleSubmit}>
-        <input
-          type="text"
-          placeholder="Username"
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
-          required
-        />
-        <input
-          type="password"
-          placeholder="Password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-        />
-        <button type="submit" className="auth-button">
-          Register
-        </button>
-      </form>
+
+        <form onSubmit={handleSubmit}>
+          <label className="field-group">
+            <span>Username</span>
+            <input
+              type="text"
+              autoComplete="username"
+              placeholder="Choose a username"
+              value={username}
+              onChange={(event) => setUsername(event.target.value)}
+              required
+            />
+          </label>
+
+          <label className="field-group">
+            <span>Password</span>
+            <input
+              type="password"
+              autoComplete="new-password"
+              placeholder="Use at least 8 characters"
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
+              required
+            />
+          </label>
+
+          <label className="settings-option auth-remember">
+            <input
+              type="checkbox"
+              checked={rememberMe}
+              onChange={() => setRememberMe((value) => !value)}
+            />
+            <span>Keep me signed in on this device</span>
+          </label>
+
+          {error ? <p className="form-error">{error}</p> : null}
+
+          <button type="submit" className="auth-button" disabled={submitting}>
+            {submitting ? "Creating account..." : "Register"}
+          </button>
+        </form>
+
         <p className="auth-footer">
           Already registered? <Link id="reg" to="/login">Login</Link>
         </p>

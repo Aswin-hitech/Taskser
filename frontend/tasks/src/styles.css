@@ -135,10 +135,30 @@ h3 {
 }
 
 .navbar-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
   font-size: 1.25rem;
   font-weight: 900;
   letter-spacing: 0;
   white-space: nowrap;
+}
+
+.navbar-brand small {
+  display: block;
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.brand-mark {
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  color: #07100d;
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  border-radius: 10px;
 }
 
 .navbar-links {
@@ -243,6 +263,19 @@ h3 {
   width: 100%;
 }
 
+.field-group span {
+  display: inline-block;
+  margin-bottom: 8px;
+  color: var(--muted);
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.form-error {
+  margin: 0 0 16px;
+  color: #ffb3be;
+}
+
 .auth-footer {
   margin: 22px 0 0;
   text-align: center;
@@ -307,6 +340,18 @@ form.add-task-form {
 .dashboard-header {
   display: grid;
   gap: 22px;
+}
+
+.page-subtitle,
+.page-status {
+  color: var(--muted);
+}
+
+.page-status {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 24px;
 }
 
 .stats-overview,
@@ -530,6 +575,37 @@ button.danger,
   font-size: 1.02rem;
 }
 
+.task-card-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.task-meta {
+  margin: 8px 0 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.task-type-badge {
+  padding: 5px 10px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.task-type-badge.habit {
+  background: rgba(72, 212, 180, 0.16);
+  color: var(--accent);
+}
+
+.task-type-badge.scheduled {
+  background: rgba(106, 168, 255, 0.18);
+  color: #9cc2ff;
+}
+
 .task-actions,
 .notification-actions,
 .notification-item-actions {
@@ -537,6 +613,24 @@ button.danger,
   flex-wrap: wrap;
   gap: 10px;
   margin-top: 18px;
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+.task-count {
+  min-width: 40px;
+  padding: 6px 10px;
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 999px;
+  text-align: center;
+  font-weight: 800;
 }
 
 .streak-text {
@@ -628,6 +722,18 @@ button.danger,
   gap: 18px;
 }
 
+.notification-content {
+  cursor: pointer;
+}
+
+.notification-preference-row {
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
 .notification-stats {
   display: flex;
   gap: 12px;
@@ -665,6 +771,83 @@ button.danger,
 .checklist-card {
   display: grid;
   gap: 18px;
+}
+
+.calendar-shell,
+.calendar-panel {
+  grid-column: 1 / -1;
+}
+
+.calendar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.calendar-day-label {
+  padding: 10px;
+  color: var(--muted);
+  text-align: center;
+  font-weight: 700;
+}
+
+.calendar-day {
+  min-height: 88px;
+  padding: 12px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.calendar-day.today {
+  border-color: rgba(72, 212, 180, 0.5);
+}
+
+.calendar-day.selected {
+  background: rgba(72, 212, 180, 0.12);
+  border-color: rgba(72, 212, 180, 0.5);
+}
+
+.calendar-day.empty {
+  min-height: 0;
+  padding: 0;
+  background: transparent;
+  border: 0;
+}
+
+.calendar-task-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  background: var(--accent);
+}
+
+.calendar-task-list {
+  display: grid;
+  gap: 12px;
+  margin-top: 18px;
+}
+
+.calendar-task-row {
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
 }
 
 .checklist-items {
@@ -779,6 +962,10 @@ button.danger,
 
 .sound-settings {
   margin-top: 18px;
+}
+
+.danger-zone {
+  border-color: rgba(255, 107, 122, 0.28);
 }
 
 .volume-levels {

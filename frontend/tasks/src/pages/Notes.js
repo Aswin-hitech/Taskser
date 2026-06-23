@@ -2,27 +2,35 @@ import { useContext, useState } from "react";
 import { NoteContext } from "../context/NoteContext";
 
 export default function Notes() {
-  const { notes, addNote, updateNote, deleteNote } = useContext(NoteContext);
-
+  const { notes, addNote, updateNote, deleteNote, loading } = useContext(NoteContext);
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
-
+  const [feedback, setFeedback] = useState("");
   const [editingId, setEditingId] = useState(null);
   const [editTitle, setEditTitle] = useState("");
   const [editContent, setEditContent] = useState("");
 
-  const handleAdd = async (e) => {
-    e.preventDefault();
-    if (!content.trim()) return;
+  const handleAdd = async (event) => {
+    event.preventDefault();
+    setFeedback("");
+    const result = await addNote({ title, content });
 
-    await addNote({ title, content });
+    if (!result.success) {
+      setFeedback(result.message);
+      return;
+    }
+
     setTitle("");
     setContent("");
   };
 
   const handleSaveEdit = async (id) => {
-    if (!editContent.trim()) return;
-    await updateNote(id, editTitle, editContent);
+    const result = await updateNote(id, editTitle, editContent);
+    if (!result.success) {
+      setFeedback(result.message);
+      return;
+    }
+
     setEditingId(null);
   };
 
@@ -30,60 +38,67 @@ export default function Notes() {
     <div className="page-container">
       <h1>Notes</h1>
 
-      {/* Add note */}
       <div className="soft-card wide-section">
         <form onSubmit={handleAdd}>
-          <input
-            type="text"
-            placeholder="Title (optional)"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-          />
+          <label className="field-group">
+            <span>Title</span>
+            <input
+              type="text"
+              placeholder="Optional title"
+              value={title}
+              onChange={(event) => setTitle(event.target.value)}
+            />
+          </label>
 
-          <textarea
-            placeholder="Write your note..."
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
-          />
+          <label className="field-group">
+            <span>Content</span>
+            <textarea
+              placeholder="Write your note..."
+              value={content}
+              onChange={(event) => setContent(event.target.value)}
+            />
+          </label>
 
+          {feedback ? <p className="form-error">{feedback}</p> : null}
           <button type="submit">Add Note</button>
         </form>
       </div>
 
-      {/* Notes list */}
-      {notes.length === 0 ? (
+      {loading ? (
+        <div className="loading-state">
+          <p>Loading notes...</p>
+        </div>
+      ) : notes.length === 0 ? (
         <p className="empty-state">No notes yet.</p>
       ) : (
         notes.map((note) => (
           <div key={note._id} className="soft-card wide-section note-card">
             {editingId === note._id ? (
               <>
-                <input
-                  value={editTitle}
-                  onChange={(e) => setEditTitle(e.target.value)}
-                />
+                <input value={editTitle} onChange={(event) => setEditTitle(event.target.value)} />
                 <textarea
                   value={editContent}
-                  onChange={(e) => setEditContent(e.target.value)}
+                  onChange={(event) => setEditContent(event.target.value)}
                 />
 
                 <div className="task-actions">
-                  <button onClick={() => handleSaveEdit(note._id)}>Save</button>
-                  <button
-                    className="secondary"
-                    onClick={() => setEditingId(null)}
-                  >
+                  <button onClick={() => handleSaveEdit(note._id)} type="button">
+                    Save
+                  </button>
+                  <button className="secondary" onClick={() => setEditingId(null)} type="button">
                     Cancel
                   </button>
                 </div>
               </>
             ) : (
               <>
-                <h3>{note.title || "Untitled"}</h3>
+                <div className="note-header">
+                  <h3>{note.title || "Untitled"}</h3>
+                  <small className="note-date">
+                    {new Date(note.createdAt).toLocaleString()}
+                  </small>
+                </div>
                 <p className="note-preview">{note.content}</p>
-                <small className="note-date">
-                  {new Date(note.createdAt).toLocaleString()}
-                </small>
 
                 <div className="task-actions">
                   <button
@@ -92,13 +107,11 @@ export default function Notes() {
                       setEditTitle(note.title);
                       setEditContent(note.content);
                     }}
+                    type="button"
                   >
                     Edit
                   </button>
-                  <button
-                    className="danger"
-                    onClick={() => deleteNote(note._id)}
-                  >
+                  <button className="danger" onClick={() => deleteNote(note._id)} type="button">
                     Delete
                   </button>
                 </div>

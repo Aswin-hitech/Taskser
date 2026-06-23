@@ -1,87 +1,84 @@
-import { useContext, useEffect, useState } from "react";
+import { useContext, useEffect, useMemo, useState } from "react";
 import { TaskContext } from "../context/TaskContext";
 import { NoteContext } from "../context/NoteContext";
 import AddTaskForm from "../components/AddTaskForm";
 import TaskCard from "../components/TaskCard";
 import ProgressMeter from "../components/ProgressMeter";
-import { processNotifications, requestNotificationPermission } from "../utils/notificationEngine";
+import {
+  processNotifications,
+  requestNotificationPermission,
+} from "../utils/notificationEngine";
 
 export default function Dashboard() {
   const {
     tasks,
+    loading,
     toggleComplete,
     deleteTask,
     checkInHabit,
     resetHabitStreak,
+    reorderTasks,
   } = useContext(TaskContext);
-
   const { notes } = useContext(NoteContext);
   const [localTasks, setLocalTasks] = useState([]);
   const [dragIndex, setDragIndex] = useState(null);
-  const [isDragging, setIsDragging] = useState(false);
   const [notificationEnabled, setNotificationEnabled] = useState(false);
 
   useEffect(() => {
     setLocalTasks(tasks);
   }, [tasks]);
 
-  // Request notification permission on mount
   useEffect(() => {
-    requestNotificationPermission().then(enabled => {
-      setNotificationEnabled(enabled);
-      if (enabled) {
-        console.log("Notifications enabled");
-      }
-    });
+    requestNotificationPermission().then(setNotificationEnabled);
   }, []);
 
-  // Process notifications every minute
   useEffect(() => {
-    if (!notificationEnabled) return;
+    if (!notificationEnabled || tasks.length === 0) return undefined;
 
-    const interval = setInterval(() => {
-      console.log("Checking for notifications...");
-      processNotifications(tasks);
-    }, 60 * 1000); // Every minute
-
-    // Also run immediately
     processNotifications(tasks);
+    const interval = setInterval(() => {
+      processNotifications(tasks);
+    }, 60 * 1000);
 
     return () => clearInterval(interval);
   }, [tasks, notificationEnabled]);
 
   const total = localTasks.length;
-  const completed = localTasks.filter(t => t.completed).length;
+  const completed = localTasks.filter((task) => task.completed).length;
   const percentage = total === 0 ? 0 : Math.round((completed / total) * 100);
+
+  const recentNotes = useMemo(() => notes.slice(0, 4), [notes]);
 
   const handleDragStart = (index) => {
     setDragIndex(index);
-    setIsDragging(true);
   };
 
-  const handleDragOver = (e, index) => {
-    e.preventDefault();
+  const handleDragOver = (event, index) => {
+    event.preventDefault();
     if (dragIndex === null || dragIndex === index) return;
 
-    const updated = [...localTasks];
-    const draggedItem = updated[dragIndex];
-    updated.splice(dragIndex, 1);
-    updated.splice(index, 0, draggedItem);
-
+    const reordered = [...localTasks];
+    const [draggedTask] = reordered.splice(dragIndex, 1);
+    reordered.splice(index, 0, draggedTask);
     setDragIndex(index);
-    setLocalTasks(updated);
+    setLocalTasks(reordered);
   };
 
-  const handleDragEnd = () => {
+  const handleDragEnd = async () => {
+    if (dragIndex !== null) {
+      await reorderTasks(localTasks);
+    }
     setDragIndex(null);
-    setIsDragging(false);
   };
 
   return (
     <div className="page-container">
-      {/* Header Section */}
       <div className="dashboard-header">
-        <h1>Your Dashboard</h1>
+        <div>
+          <h1>Your Dashboard</h1>
+          <p className="page-subtitle">See what is due, what is moving, and what still needs attention.</p>
+        </div>
+
         <div className="stats-overview">
           <div className="stat-card total">
             <span className="stat-label">Total Tasks</span>
@@ -93,37 +90,35 @@ export default function Dashboard() {
           </div>
           <div className="stat-card progress">
             <span className="stat-label">In Progress</span>
-            <span className="stat-value">{total - completed}</span>
+            <span className="stat-value">{Math.max(total - completed, 0)}</span>
           </div>
         </div>
       </div>
-     {/* Notification Status */}
+
       {!notificationEnabled && (
         <div className="notification-warning">
-          <p>
-            🔔 Notifications are disabled. Enable them in your browser settings 
-            to receive task reminders.
-          </p>
+          <p>Browser reminders are off right now. You can still manage tasks here, but reminders will stay quiet until permission is enabled.</p>
         </div>
       )}
 
-      {/* Progress Meter + Add Task Form Row */}
       <ProgressMeter percentage={percentage} />
       <AddTaskForm />
 
-      {/* Tasks Section */}
-      <div className={`section tasks ${isDragging ? 'dragging-active' : ''}`}>
-        <h2>
-          <span className="icon">📋</span>
-          Your Tasks   
-          <span className="task-count"> :  {localTasks.length}</span>
-        </h2>
-        
-        {localTasks.length === 0 ? (
+      <section className="section tasks">
+        <div className="section-header">
+          <h2>Your Tasks</h2>
+          <span className="task-count">{localTasks.length}</span>
+        </div>
+
+        {loading ? (
+          <div className="loading-state">
+            <p>Loading tasks...</p>
+          </div>
+        ) : localTasks.length === 0 ? (
           <div className="empty-state">
-            <span className="empty-icon">✨</span>
+            <div className="empty-icon">+</div>
             <h3>No tasks yet</h3>
-            <p>Create your first task to get started!</p>
+            <p>Create your first task to get started.</p>
           </div>
         ) : (
           <div className="tasks-grid">
@@ -144,24 +139,24 @@ export default function Dashboard() {
             ))}
           </div>
         )}
-      </div>
+      </section>
 
-      {/* Notes Section */}
-      <div className="section notes">
-        <h2>
-          <span className="icon">📝</span>
-          Recent Notes
-        </h2>
-        
-        {notes.length === 0 ? (
+      <section className="section notes">
+        <div className="section-header">
+          <h2>Recent Notes</h2>
+          <span className="task-count">{recentNotes.length}</span>
+        </div>
+
+        {recentNotes.length === 0 ? (
           <div className="empty-state">
-            <span className="empty-icon">📄</span>
+            <div className="empty-icon">N</div>
             <h3>No notes yet</h3>
+            <p>Capture quick ideas or reference details here.</p>
           </div>
         ) : (
           <div className="notes-list">
-            {notes.slice(0, 4).map(note => (
-              <div key={note._id} className="note-card">
+            {recentNotes.map((note) => (
+              <article key={note._id} className="note-card">
                 <div className="note-header">
                   <strong className="note-title">{note.title}</strong>
                   <span className="note-date">
@@ -169,14 +164,14 @@ export default function Dashboard() {
                   </span>
                 </div>
                 <p className="note-preview">
-                  {note.content.substring(0, 120)}
-                  {note.content.length > 120 ? '...' : ''}
+                  {note.content.substring(0, 140)}
+                  {note.content.length > 140 ? "..." : ""}
                 </p>
-              </div>
+              </article>
             ))}
           </div>
         )}
-      </div>
+      </section>
     </div>
   );
 }

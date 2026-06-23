@@ -1,9 +1,13 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 export default function ChecklistCard({ list, onUpdate, onDelete }) {
   const [items, setItems] = useState(list.items || []);
   const [text, setText] = useState("");
   const [dragIndex, setDragIndex] = useState(null);
+
+  useEffect(() => {
+    setItems(list.items || []);
+  }, [list.items]);
 
   const save = (updatedItems) => {
     setItems(updatedItems);
@@ -17,13 +21,11 @@ export default function ChecklistCard({ list, onUpdate, onDelete }) {
   };
 
   const deleteItem = (index) => {
-    const updated = items.filter((_, i) => i !== index);
-    save(updated);
+    save(items.filter((_, itemIndex) => itemIndex !== index));
   };
 
   return (
     <div className="soft-card wide-section checklist-card">
-      {/* HEADER */}
       <div className="checklist-header">
         <h3 className="checklist-title">{list.title}</h3>
 
@@ -34,69 +36,66 @@ export default function ChecklistCard({ list, onUpdate, onDelete }) {
               onDelete(list._id);
             }
           }}
+          type="button"
         >
-          🗑
+          Delete
         </button>
       </div>
 
-      {/* ITEMS GRID */}
       <div className="checklist-items">
-        {items.map((item, i) => (
+        {items.map((item, index) => (
           <div
-            key={i}
+            key={`${list._id}-${index}`}
             className="checklist-item"
             draggable
-            onDragStart={() => setDragIndex(i)}
-            onDragOver={(e) => e.preventDefault()}
+            onDragStart={() => setDragIndex(index)}
+            onDragOver={(event) => event.preventDefault()}
             onDrop={() => {
+              if (dragIndex === null || dragIndex === index) return;
               const updated = [...items];
-              const dragged = updated[dragIndex];
-              updated.splice(dragIndex, 1);
-              updated.splice(i, 0, dragged);
-              save(updated);
+              const [dragged] = updated.splice(dragIndex, 1);
+              updated.splice(index, 0, dragged);
+              save(updated.map((entry, entryIndex) => ({ ...entry, priority: entryIndex })));
             }}
           >
-            {/* CHECKBOX + TEXT */}
             <label className="checklist-item-row">
               <input
                 type="checkbox"
                 checked={item.completed}
                 onChange={() => {
                   const updated = [...items];
-                  updated[i].completed = !updated[i].completed;
+                  updated[index].completed = !updated[index].completed;
                   save(updated);
                 }}
               />
 
-              <span
-                className={`checklist-text ${
-                  item.completed ? "completed" : ""
-                }`}
-              >
+              <span className={`checklist-text ${item.completed ? "completed" : ""}`}>
                 {item.text}
               </span>
             </label>
 
-            {/* DELETE ITEM */}
-            <button
-              className="checklist-delete-item"
-              onClick={() => deleteItem(i)}
-            >
-              ✕
+            <button className="checklist-delete-item" onClick={() => deleteItem(index)} type="button">
+              Remove
             </button>
           </div>
         ))}
       </div>
 
-      {/* ADD ITEM */}
       <div className="checklist-add">
         <input
           placeholder="Add item..."
           value={text}
-          onChange={(e) => setText(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && addItem()}
+          onChange={(event) => setText(event.target.value)}
+          onKeyDown={(event) => {
+            if (event.key === "Enter") {
+              event.preventDefault();
+              addItem();
+            }
+          }}
         />
-        <button onClick={addItem}>Add</button>
+        <button onClick={addItem} type="button">
+          Add
+        </button>
       </div>
     </div>
   );

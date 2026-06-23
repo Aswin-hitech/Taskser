@@ -1,21 +1,21 @@
-import { createContext, useState, useEffect, useContext, useCallback } from "react";
-import api from "./api"; // Use the new api utility
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import api from "./api";
 import { AuthContext } from "./AuthContext";
 
 export const ChecklistContext = createContext();
 
 export const ChecklistProvider = ({ children }) => {
-  const { authChecked, isAuthenticated } = useContext(AuthContext);
+  const { user, loading: authLoading } = useContext(AuthContext);
   const [lists, setLists] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
 
   const fetchLists = useCallback(async () => {
-    if (!isAuthenticated()) {
+    if (!user) {
       setLists([]);
-      setLoading(false);
       return;
     }
 
+    setLoading(true);
     try {
       const res = await api.get("/api/checklists");
       setLists(res.data.lists || []);
@@ -25,62 +25,64 @@ export const ChecklistProvider = ({ children }) => {
     } finally {
       setLoading(false);
     }
-  }, [isAuthenticated]);
+  }, [user]);
 
   useEffect(() => {
-    if (authChecked) {
+    if (!authLoading) {
       fetchLists();
     }
-  }, [authChecked, fetchLists]);
+  }, [authLoading, fetchLists]);
 
   const createList = async (title) => {
-    if (!title.trim()) return;
     try {
       const res = await api.post("/api/checklists", { title });
-      setLists((prev) => [...prev, res.data.list]);
+      setLists((prev) => [res.data.list, ...prev]);
       return { success: true, data: res.data.list };
     } catch (err) {
-      console.error("CREATE LIST ERROR:", err.message);
-      return { success: false, error: err.message };
+      return {
+        success: false,
+        error: err.response?.data?.message || "Unable to create checklist",
+      };
     }
   };
 
   const updateList = async (id, data) => {
     try {
       const res = await api.put(`/api/checklists/${id}`, data);
-      setLists((prev) =>
-        prev.map((l) => (l._id === id ? res.data.list : l))
-      );
+      setLists((prev) => prev.map((list) => (list._id === id ? res.data.list : list)));
       return { success: true, data: res.data.list };
     } catch (err) {
-      console.error("UPDATE LIST ERROR:", err.message);
-      return { success: false, error: err.message };
+      return {
+        success: false,
+        error: err.response?.data?.message || "Unable to update checklist",
+      };
     }
   };
 
   const deleteList = async (id) => {
     try {
       await api.delete(`/api/checklists/${id}`);
-      setLists((prev) => prev.filter((l) => l._id !== id));
+      setLists((prev) => prev.filter((list) => list._id !== id));
       return { success: true };
     } catch (err) {
-      console.error("DELETE LIST ERROR:", err.message);
-      return { success: false, error: err.message };
+      return {
+        success: false,
+        error: err.response?.data?.message || "Unable to delete checklist",
+      };
     }
   };
 
-  return (
-    <ChecklistContext.Provider
-      value={{ 
-        lists, 
-        loading,
-        createList, 
-        updateList, 
-        deleteList,
-        refreshLists: fetchLists 
-      }}
-    >
-      {children}
-    </ChecklistContext.Provider>
+  const value = useMemo(
+    () => ({
+      lists,
+      loading,
+      createList,
+      updateList,
+      deleteList,
+      refreshLists: fetchLists,
+    }),
+    [lists, loading, fetchLists]
   );
+
+  return <ChecklistContext.Provider value={value}>{children}</ChecklistContext.Provider>;
 };

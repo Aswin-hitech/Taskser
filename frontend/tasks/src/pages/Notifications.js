@@ -1,22 +1,28 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import api from "../context/api";
 
 export default function Notifications() {
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedNotifications, setSelectedNotifications] = useState([]);
-  const [selectAll, setSelectAll] = useState(false);
 
   useEffect(() => {
     fetchNotifications();
   }, []);
+
+  const unreadCount = useMemo(
+    () => notifications.filter((notification) => !notification.viewed).length,
+    [notifications]
+  );
+
+  const allSelected =
+    notifications.length > 0 && selectedNotifications.length === notifications.length;
 
   const fetchNotifications = async () => {
     try {
       const res = await api.get("/api/notifications");
       setNotifications(res.data.notifications || []);
       setSelectedNotifications([]);
-      setSelectAll(false);
     } catch (err) {
       console.error("Failed to fetch notifications", err);
     } finally {
@@ -28,8 +34,8 @@ export default function Notifications() {
     try {
       await api.put(`/api/notifications/${id}/view`);
       setNotifications((prev) =>
-        prev.map((n) =>
-          n._id === id ? { ...n, viewed: true } : n
+        prev.map((notification) =>
+          notification._id === id ? { ...notification, viewed: true } : notification
         )
       );
     } catch (err) {
@@ -40,26 +46,31 @@ export default function Notifications() {
   const markAllAsRead = async () => {
     try {
       await api.put("/api/notifications/mark-all-read");
-      
-      // Update local state
-      setNotifications((prev) =>
-        prev.map((n) => ({ ...n, viewed: true }))
-      );
+      setNotifications((prev) => prev.map((notification) => ({ ...notification, viewed: true })));
       setSelectedNotifications([]);
-      setSelectAll(false);
     } catch (err) {
       console.error("Failed to mark all as read", err);
     }
   };
 
-  const deleteNotification = async (id) => {
-    if (!window.confirm("Are you sure you want to delete this notification?")) {
-      return;
+  const clearAllNotifications = async () => {
+    if (!window.confirm("Clear all notifications?")) return;
+
+    try {
+      await api.delete("/api/notifications/clear-all");
+      setNotifications([]);
+      setSelectedNotifications([]);
+    } catch (err) {
+      console.error("Failed to clear notifications", err);
     }
-    
+  };
+
+  const deleteNotification = async (id) => {
+    if (!window.confirm("Delete this notification?")) return;
+
     try {
       await api.delete(`/api/notifications/${id}`);
-      setNotifications((prev) => prev.filter((n) => n._id !== id));
+      setNotifications((prev) => prev.filter((notification) => notification._id !== id));
       setSelectedNotifications((prev) => prev.filter((selectedId) => selectedId !== id));
     } catch (err) {
       console.error("Failed to delete notification", err);
@@ -67,85 +78,56 @@ export default function Notifications() {
   };
 
   const deleteSelectedNotifications = async () => {
-    if (selectedNotifications.length === 0) {
-      alert("Please select notifications to delete");
-      return;
-    }
-    
-    if (!window.confirm(`Are you sure you want to delete ${selectedNotifications.length} notification(s)?`)) {
-      return;
-    }
-    
+    if (selectedNotifications.length === 0) return;
+    if (!window.confirm(`Delete ${selectedNotifications.length} selected notification(s)?`)) return;
+
     try {
       await api.delete("/api/notifications/bulk", { data: { ids: selectedNotifications } });
-      
-      // Remove deleted notifications from state
-      setNotifications((prev) => 
-        prev.filter((n) => !selectedNotifications.includes(n._id))
+      setNotifications((prev) =>
+        prev.filter((notification) => !selectedNotifications.includes(notification._id))
       );
       setSelectedNotifications([]);
-      setSelectAll(false);
     } catch (err) {
       console.error("Failed to delete selected notifications", err);
     }
   };
 
-  const handleSelectNotification = (id) => {
-    setSelectedNotifications((prev) => {
-      if (prev.includes(id)) {
-        return prev.filter((selectedId) => selectedId !== id);
-      } else {
-        return [...prev, id];
-      }
-    });
+  const toggleSelectNotification = (id) => {
+    setSelectedNotifications((prev) =>
+      prev.includes(id) ? prev.filter((selectedId) => selectedId !== id) : [...prev, id]
+    );
   };
 
-  const handleSelectAll = () => {
-    if (selectAll) {
-      setSelectedNotifications([]);
-    } else {
-      setSelectedNotifications(notifications.map((n) => n._id));
-    }
-    setSelectAll(!selectAll);
-  };
-
-  const getUnreadCount = () => {
-    return notifications.filter((n) => !n.viewed).length;
+  const toggleSelectAll = () => {
+    setSelectedNotifications(allSelected ? [] : notifications.map((notification) => notification._id));
   };
 
   return (
     <div className="page-container">
       <h1>Notifications</h1>
-      
-      {/* Notification Controls */}
+
       <div className="notification-controls-bar">
         <div className="notification-stats">
-          <span className="total-count">Total: {notifications.length}</span>
-          <span className="unread-count">Unread: {getUnreadCount()}</span>
+          <span>Total: {notifications.length}</span>
+          <span>Unread: {unreadCount}</span>
         </div>
-        
+
         <div className="notification-actions">
-          <button 
-            onClick={markAllAsRead} 
-            className="action-btn mark-all-read"
-            disabled={getUnreadCount() === 0}
-          >
-            Mark All as Read
+          <button onClick={markAllAsRead} className="action-btn mark-all-read" disabled={unreadCount === 0}>
+            Mark All Read
           </button>
-          
-          <button 
-            onClick={deleteSelectedNotifications} 
+          <button
+            onClick={deleteSelectedNotifications}
             className="action-btn delete-selected danger"
             disabled={selectedNotifications.length === 0}
           >
-            Delete Selected ({selectedNotifications.length})
+            Delete Selected
           </button>
-          
-          <button 
-            onClick={handleSelectAll} 
-            className="action-btn select-all"
-          >
-            {selectAll ? "Deselect All" : "Select All"}
+          <button onClick={toggleSelectAll} className="action-btn select-all">
+            {allSelected ? "Deselect All" : "Select All"}
+          </button>
+          <button onClick={clearAllNotifications} className="action-btn select-all">
+            Clear All
           </button>
         </div>
       </div>
@@ -156,64 +138,73 @@ export default function Notifications() {
         </div>
       ) : notifications.length === 0 ? (
         <div className="empty-state">
-          <div className="empty-icon">🔔</div>
+          <div className="empty-icon">!</div>
           <h3>No notifications yet</h3>
-          <p>You'll see notifications here for task reminders and updates</p>
+          <p>Task reminders and updates will appear here.</p>
         </div>
       ) : (
         <div className="notifications-list">
-          {notifications.map((notif) => (
+          {notifications.map((notification) => (
             <div
-              key={notif._id}
-              className={`notification-item ${notif.viewed ? "read" : "unread"} ${
-                selectedNotifications.includes(notif._id) ? "selected" : ""
+              key={notification._id}
+              className={`notification-item ${notification.viewed ? "read" : "unread"} ${
+                selectedNotifications.includes(notification._id) ? "selected" : ""
               }`}
             >
               <div className="notification-checkbox">
                 <input
                   type="checkbox"
-                  checked={selectedNotifications.includes(notif._id)}
-                  onChange={() => handleSelectNotification(notif._id)}
+                  checked={selectedNotifications.includes(notification._id)}
+                  onChange={() => toggleSelectNotification(notification._id)}
                 />
               </div>
-              
-              <div 
+
+              <div
                 className="notification-content"
-                onClick={() => !notif.viewed && markAsViewed(notif._id)}
+                onClick={() => !notification.viewed && markAsViewed(notification._id)}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter") {
+                    markAsViewed(notification._id);
+                  }
+                }}
               >
                 <div className="notification-header">
                   <strong className="notification-type">
-                    {notif.type.replace("_", " ").toUpperCase()}
+                    {notification.type.replaceAll("_", " ").toUpperCase()}
                   </strong>
-                  {!notif.viewed && <span className="unread-badge">NEW</span>}
+                  {!notification.viewed ? <span className="unread-badge">New</span> : null}
                 </div>
-                
-                <p className="notification-message">{notif.message}</p>
-                
+
+                <p className="notification-message">{notification.message}</p>
+
                 <div className="notification-footer">
                   <small className="notification-time">
-                    {new Date(notif.createdAt).toLocaleString()}
+                    {new Date(notification.createdAt).toLocaleString()}
                   </small>
-                  
+
                   <div className="notification-item-actions">
-                    {!notif.viewed && (
-                      <button 
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          markAsViewed(notif._id);
+                    {!notification.viewed ? (
+                      <button
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          markAsViewed(notification._id);
                         }}
                         className="small-btn mark-read"
+                        type="button"
                       >
-                        Mark as Read
+                        Mark Read
                       </button>
-                    )}
-                    
-                    <button 
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        deleteNotification(notif._id);
+                    ) : null}
+
+                    <button
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        deleteNotification(notification._id);
                       }}
                       className="small-btn delete-btn danger"
+                      type="button"
                     >
                       Delete
                     </button>

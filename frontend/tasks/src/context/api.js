@@ -1,55 +1,86 @@
 import axios from "axios";
 
-// Create axios instance
+const API_BASE_URL = process.env.REACT_APP_API_URL || "http://localhost:5000";
+
 const api = axios.create({
-  baseURL: process.env.REACT_APP_API_URL || "http://localhost:5000",
+  baseURL: API_BASE_URL,
+  withCredentials: true,
 });
 
-// Request interceptor to add auth token
-api.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem("token") || sessionStorage.getItem("token");
-    
-    if (token) {
-      // Check if token is expired
-      try {
-        const payload = JSON.parse(atob(token.split('.')[1]));
-        if (payload.exp * 1000 > Date.now()) {
-          config.headers.Authorization = `Bearer ${token}`;
-        } else {
-          // Token expired, clear it
-          localStorage.removeItem("token");
-          sessionStorage.removeItem("token");
-          window.location.href = "/login";
-        }
-      } catch (error) {
-        console.error("Token validation error:", error);
-        localStorage.removeItem("token");
-        sessionStorage.removeItem("token");
-      }
-    }
-    
-    return config;
-  },
-  (error) => {
-    return Promise.reject(error);
-  }
-);
+const authClient = axios.create({
+  baseURL: API_BASE_URL,
+  withCredentials: true,
+});
 
-// Response interceptor to handle 401 errors
+let accessToken = null;
+let refreshPromise = null;
+let authFailureHandler = null;
+
+export const setAccessToken = (token) => {
+  accessToken = token || null;
+};
+
+export const clearAccessToken = () => {
+  accessToken = null;
+};
+
+export const setAuthFailureHandler = (handler) => {
+  authFailureHandler = handler;
+};
+
+export const refreshSession = async () => {
+  if (!refreshPromise) {
+    refreshPromise = authClient
+      .post("/api/auth/refresh")
+      .then((response) => {
+        setAccessToken(response.data.accessToken);
+        return response.data;
+      })
+      .catch((error) => {
+        clearAccessToken();
+        throw error;
+      })
+      .finally(() => {
+        refreshPromise = null;
+      });
+  }
+
+  return refreshPromise;
+};
+
+api.interceptors.request.use((config) => {
+  if (accessToken) {
+    config.headers.Authorization = `Bearer ${accessToken}`;
+  }
+
+  return config;
+});
+
 api.interceptors.response.use(
   (response) => response,
-  (error) => {
-    if (error.response?.status === 401) {
-      // Clear auth data
-      localStorage.removeItem("token");
-      sessionStorage.removeItem("token");
-      
-      // Only redirect if not already on login page
-      if (!window.location.pathname.includes("/login")) {
-        window.location.href = "/login";
+  async (error) => {
+    const originalRequest = error.config;
+    const status = error.response?.status;
+    const isAuthRoute = originalRequest?.url?.includes("/api/auth/");
+
+    if (status === 401 && !originalRequest?._retry && !isAuthRoute) {
+      originalRequest._retry = true;
+
+      try {
+        const refreshed = await refreshSession();
+        if (refreshed?.accessToken) {
+          originalRequest.headers.Authorization = `Bearer ${refreshed.accessToken}`;
+        }
+        return api(originalRequest);
+      } catch (refreshError) {
+        clearAccessToken();
+        if (authFailureHandler) {
+          authFailureHandler();
+        }
+        return Promise.reject(refreshError);
       }
     }
+
     return Promise.reject(error);
   }
 );
