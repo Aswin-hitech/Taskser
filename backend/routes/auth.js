@@ -1,11 +1,9 @@
 const express = require("express");
-const crypto = require("crypto");
 const User = require("../models/User");
 const Task = require("../models/Task");
 const Note = require("../models/Note");
 const Notification = require("../models/Notification");
 const Checklist = require("../models/CheckList");
-const { canSendEmail, sendPasswordResetEmail } = require("../utils/mailer");
 const protect = require("../middleware/protect");
 const config = require("../config/env");
 const {
@@ -18,9 +16,7 @@ const {
 } = require("../utils/authUtils");
 const {
   normalizeUsername,
-  normalizeEmail,
   validateUsername,
-  validateEmail,
   validatePassword,
 } = require("../utils/validation");
 
@@ -44,35 +40,27 @@ const issueAuthTokens = async (res, user, rememberMe = true) => {
 
 router.post("/register", async (req, res) => {
   try {
-    const { username, email, password, rememberMe = true } = req.body;
+    const { username, password, rememberMe = true } = req.body;
     const normalizedUsername = normalizeUsername(username);
-    const normalizedEmail = normalizeEmail(email);
     const usernameError = validateUsername(normalizedUsername);
-    const emailError = validateEmail(normalizedEmail);
     const passwordError = validatePassword(password);
 
-    if (usernameError || emailError || passwordError) {
+    if (usernameError || passwordError) {
       return res.status(400).json({
         success: false,
-        message: usernameError || emailError || passwordError,
+        message: usernameError || passwordError,
       });
     }
 
-    const existingUser = await User.findOne({
-      $or: [{ username: normalizedUsername }, { email: normalizedEmail }],
-    });
+    const existingUser = await User.findOne({ username: normalizedUsername });
     if (existingUser) {
       return res.status(400).json({
         success: false,
-        message: "Username or email already exists",
+        message: "Username already exists",
       });
     }
 
-    const user = new User({
-      username: normalizedUsername,
-      email: normalizedEmail,
-      password,
-    });
+    const user = new User({ username: normalizedUsername, password });
     await user.save();
 
     const accessToken = await issueAuthTokens(res, user, Boolean(rememberMe));
@@ -111,100 +99,6 @@ router.post("/login", async (req, res) => {
   } catch (err) {
     console.error("[LOGIN ERROR]", err.message);
     return res.status(500).json({ success: false, message: "Login failed" });
-  }
-});
-
-router.post("/forgot-password", async (req, res) => {
-  try {
-    const normalizedEmail = normalizeEmail(req.body.email);
-    const emailError = validateEmail(normalizedEmail);
-
-    if (emailError) {
-      return res.status(400).json({ success: false, message: emailError });
-    }
-
-    const user = await User.findOne({ email: normalizedEmail }).select(
-      "+passwordResetTokenHash +passwordResetExpiresAt"
-    );
-
-    if (!user) {
-      return res.json({
-        success: true,
-        message: "If that email exists, a reset link has been prepared.",
-      });
-    }
-
-    const rawToken = crypto.randomBytes(32).toString("hex");
-    const tokenHash = crypto.createHash("sha256").update(rawToken).digest("hex");
-    const expiresAt = new Date(Date.now() + 60 * 60 * 1000);
-    const resetUrl = `${config.frontendAppUrl}/reset-password/${rawToken}`;
-
-    user.passwordResetTokenHash = tokenHash;
-    user.passwordResetExpiresAt = expiresAt;
-    await user.save();
-
-    const emailSent = await sendPasswordResetEmail({
-      to: user.email,
-      username: user.username,
-      resetUrl,
-    });
-
-    return res.json({
-      success: true,
-      message: emailSent
-        ? "If that email exists, a reset link has been sent."
-        : "Reset link generated.",
-      ...(emailSent || config.isProduction ? {} : { resetUrl }),
-    });
-  } catch (error) {
-    return res.status(500).json({
-      success: false,
-      message: "Unable to process password reset request",
-    });
-  }
-});
-
-router.post("/reset-password/:token", async (req, res) => {
-  try {
-    const passwordError = validatePassword(req.body.password);
-    if (passwordError) {
-      return res.status(400).json({ success: false, message: passwordError });
-    }
-
-    const tokenHash = crypto
-      .createHash("sha256")
-      .update(req.params.token)
-      .digest("hex");
-
-    const user = await User.findOne({
-      passwordResetTokenHash: tokenHash,
-      passwordResetExpiresAt: { $gt: new Date() },
-    }).select("+password +refreshTokenHash +passwordResetTokenHash +passwordResetExpiresAt");
-
-    if (!user) {
-      return res.status(400).json({
-        success: false,
-        message: "This reset link is invalid or has expired.",
-      });
-    }
-
-    user.password = req.body.password;
-    user.refreshTokenHash = null;
-    user.passwordResetTokenHash = null;
-    user.passwordResetExpiresAt = null;
-    await user.save();
-
-    res.clearCookie(config.cookieName, getRefreshCookieOptions());
-
-    return res.json({
-      success: true,
-      message: "Password updated successfully. Please log in again.",
-    });
-  } catch (error) {
-    return res.status(500).json({
-      success: false,
-      message: "Unable to reset password",
-    });
   }
 });
 

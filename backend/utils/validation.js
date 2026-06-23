@@ -45,18 +45,6 @@ const validatePassword = (value) => {
   return null;
 };
 
-const normalizeEmail = (value) => sanitizeText(value).toLowerCase();
-
-const validateEmail = (value) => {
-  const email = normalizeEmail(value);
-
-  if (!validator.isEmail(email)) {
-    return "A valid email address is required.";
-  }
-
-  return null;
-};
-
 const validateObjectIdParam = (value, label = "Resource") => {
   if (!isValidObjectId(value)) {
     return `${label} id is invalid.`;
@@ -91,9 +79,7 @@ module.exports = {
   sanitizeText,
   sanitizeMultilineText,
   normalizeUsername,
-  normalizeEmail,
   validateUsername,
-  validateEmail,
   validatePassword,
   validateObjectIdParam,
   normalizeDateInput,

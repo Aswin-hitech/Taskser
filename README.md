@@ -18,7 +18,6 @@ Taskser is a full-stack task, notes, checklist, and reminder application built w
 - Password hashing with bcrypt
 - Short-lived access tokens
 - HttpOnly refresh-cookie rotation
-- Forgot-password reset flow with expiring reset tokens
 - Protected API routes
 - Request rate limiting
 - Helmet security headers
@@ -28,4 +27,3 @@ Taskser is a full-stack task, notes, checklist, and reminder application built w
 
 - The backend requires a reachable MongoDB instance.
 - Frontend reminders use the browser Notification API, so notification delivery depends on browser permission.
-- Password reset emails require SMTP settings in `backend/.env`. Without SMTP in development, the reset endpoint returns a temporary reset URL in the API response for local testing.

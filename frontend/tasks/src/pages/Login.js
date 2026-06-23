@@ -79,10 +79,6 @@ export default function Login() {
         </form>
 
         <p className="auth-footer">
-          <Link id="reg" to="/forgot-password">Forgot password?</Link>
-        </p>
-
-        <p className="auth-footer">
           No account yet? <Link id="reg" to="/register">Create one</Link>
         </p>
       </div>
