@@ -45,6 +45,14 @@ const config = {
   refreshTokenTtl: process.env.REFRESH_TOKEN_TTL || "7d",
   bcryptRounds: Number(process.env.BCRYPT_ROUNDS) || 10,
   cookieName: process.env.REFRESH_COOKIE_NAME || "taskser_refresh",
+  backendUrl: process.env.BACKEND_URL || `http://localhost:${Number(process.env.PORT) || 5000}`,
+  frontendAppUrl: process.env.FRONTEND_APP_URL || "http://localhost:3000",
+  smtpHost: process.env.SMTP_HOST || "",
+  smtpPort: Number(process.env.SMTP_PORT) || 0,
+  smtpSecure: process.env.SMTP_SECURE === "true",
+  smtpUser: process.env.SMTP_USER || "",
+  smtpPass: process.env.SMTP_PASS || "",
+  mailFrom: process.env.MAIL_FROM || "",
   isValid:
     !!getSecret("ACCESS_TOKEN_SECRET", "JWT_SECRET") &&
     !!getSecret("REFRESH_TOKEN_SECRET", "JWT_REFRESH_SECRET") &&

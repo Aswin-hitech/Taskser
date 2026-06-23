@@ -4,6 +4,7 @@ import { AuthContext } from "../context/AuthContext";
 
 export default function Register() {
   const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(
     localStorage.getItem("rememberMePreference") !== "false"
@@ -18,7 +19,7 @@ export default function Register() {
     setSubmitting(true);
     setError("");
 
-    const result = await register(username, password, rememberMe);
+    const result = await register(username, email, password, rememberMe);
 
     if (result.success) {
       navigate("/dashboard");
@@ -46,6 +47,18 @@ export default function Register() {
               placeholder="Choose a username"
               value={username}
               onChange={(event) => setUsername(event.target.value)}
+              required
+            />
+          </label>
+
+          <label className="field-group">
+            <span>Email</span>
+            <input
+              type="email"
+              autoComplete="email"
+              placeholder="you@example.com"
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
               required
             />
           </label>
