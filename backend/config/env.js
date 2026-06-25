@@ -47,10 +47,23 @@ const config = {
   cookieName: process.env.REFRESH_COOKIE_NAME || "taskser_refresh",
   contestSyncCron: process.env.CONTEST_SYNC_CRON || "*/30 * * * *",
   contestReminderCron: process.env.CONTEST_REMINDER_CRON || "* * * * *",
+  llmProvider: process.env.LLM_PROVIDER || "groq",
+  groqApiKey: process.env.GROQ_API_KEY || "",
+  groqModel: process.env.GROQ_MODEL || "llama-3.3-70b-versatile",
+  groqFallbackModel: process.env.GROQ_FALLBACK_MODEL || "llama-3.1-8b-instant",
+  ninjaQuotesApiKey: process.env.NINJA_QUOTES_API_KEY || "",
   isValid:
     !!getSecret("ACCESS_TOKEN_SECRET", "JWT_SECRET") &&
     !!getSecret("REFRESH_TOKEN_SECRET", "JWT_REFRESH_SECRET") &&
-    !!(process.env.MONGO_URI || !isProduction),
+    !!(process.env.MONGO_URI || !isProduction) &&
+    !!(process.env.LLM_PROVIDER !== "groq" || process.env.GROQ_API_KEY || !isProduction),
+  hasLlmConfig: () => {
+    if ((process.env.LLM_PROVIDER || "groq") !== "groq") {
+      return true;
+    }
+
+    return Boolean(process.env.GROQ_API_KEY);
+  },
   getDiagnostics: () => ({
     environment: process.env.NODE_ENV || "development",
     port: Number(process.env.PORT) || 5000,
@@ -64,6 +77,10 @@ const config = {
       !getSecret("ACCESS_TOKEN_SECRET", "JWT_SECRET") && "ACCESS_TOKEN_SECRET",
       !getSecret("REFRESH_TOKEN_SECRET", "JWT_REFRESH_SECRET") &&
         "REFRESH_TOKEN_SECRET",
+      (process.env.LLM_PROVIDER || "groq") === "groq" &&
+        !process.env.GROQ_API_KEY &&
+        "GROQ_API_KEY",
+      !process.env.NINJA_QUOTES_API_KEY && "NINJA_QUOTES_API_KEY",
     ].filter(Boolean),
   }),
 };

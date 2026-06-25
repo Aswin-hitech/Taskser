@@ -6,6 +6,7 @@ import "../styles.css";
 const navItems = [
   { to: "/dashboard", label: "Tasks" },
   { to: "/contests", label: "Contests" },
+  { to: "/career-roadmap", label: "Roadmap" },
   { to: "/calendar", label: "Calendar" },
   { to: "/checklists", label: "Checklists" },
   { to: "/notes", label: "Notes" },

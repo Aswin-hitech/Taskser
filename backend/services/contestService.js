@@ -154,6 +154,7 @@ const getContestList = async ({ userId, platform, sort, favoritesOnly }) => {
       return {
         ...contest.toObject(),
         isFavorite: Boolean(preference?.isFavorite),
+        isScheduled: Boolean(preference?.isScheduled),
         reminderOffsets:
           preference?.reminderOffsets?.length > 0
             ? preference.reminderOffsets
@@ -170,7 +171,13 @@ const getContestList = async ({ userId, platform, sort, favoritesOnly }) => {
   };
 };
 
-const updateContestPreference = async ({ userId, contestId, isFavorite, reminderOffsets }) => {
+const updateContestPreference = async ({
+  userId,
+  contestId,
+  isFavorite,
+  isScheduled,
+  reminderOffsets,
+}) => {
   const contest = await Contest.findById(contestId);
 
   if (!contest) {
@@ -188,6 +195,7 @@ const updateContestPreference = async ({ userId, contestId, isFavorite, reminder
     {
       $set: {
         ...(typeof isFavorite === "boolean" ? { isFavorite } : {}),
+        ...(typeof isScheduled === "boolean" ? { isScheduled } : {}),
         ...(sanitizedOffsets ? { reminderOffsets: sanitizedOffsets } : {}),
       },
     },
@@ -201,6 +209,7 @@ const updateContestPreference = async ({ userId, contestId, isFavorite, reminder
   return {
     ...contest.toObject(),
     isFavorite: preference.isFavorite,
+    isScheduled: preference.isScheduled,
     reminderOffsets: preference.reminderOffsets,
   };
 };

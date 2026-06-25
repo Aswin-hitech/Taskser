@@ -10,6 +10,34 @@ const {
 } = require("../utils/validation");
 
 const router = express.Router();
+const allowedDayNames = [
+  "monday",
+  "tuesday",
+  "wednesday",
+  "thursday",
+  "friday",
+  "saturday",
+  "sunday",
+];
+
+const normalizeDayNames = (value) => {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return [...new Set(value.map((day) => sanitizeText(day).toLowerCase()))].filter((day) =>
+    allowedDayNames.includes(day)
+  );
+};
+
+const normalizeNotificationMinutes = (value) => {
+  const numberValue = Number(value);
+  if (!Number.isFinite(numberValue) || numberValue < 0) {
+    return 0;
+  }
+
+  return Math.min(Math.round(numberValue), 10080);
+};
 
 router.get("/", protect, async (req, res) => {
   try {
@@ -25,7 +53,18 @@ router.get("/", protect, async (req, res) => {
 
 router.post("/", protect, async (req, res) => {
   try {
-    const { description, type, date, time, reminder, reminderTime } = req.body;
+    const {
+      description,
+      type,
+      date,
+      time,
+      reminder,
+      reminderTime,
+      dayNames,
+      notificationMinutesBefore,
+      weeklyRecurrence,
+      customRepeatRules,
+    } = req.body;
     const cleanDescription = sanitizeText(description);
 
     if (!cleanDescription || !type) {
@@ -40,9 +79,14 @@ router.post("/", protect, async (req, res) => {
     }
 
     const normalizedDate = type === "scheduled" ? normalizeDateInput(date) : null;
-    const normalizedTime = type === "scheduled" ? normalizeTimeInput(time) : null;
+    const normalizedTime =
+      type === "scheduled" || type === "daily" ? normalizeTimeInput(time) : null;
     const normalizedReminderTime =
       type === "daily" && reminder ? normalizeTimeInput(reminderTime) : null;
+    const normalizedDayNames = type === "daily" ? normalizeDayNames(dayNames) : [];
+    const normalizedNotificationMinutes = normalizeNotificationMinutes(
+      notificationMinutesBefore
+    );
 
     const task = new Task({
       user: req.userId,
@@ -50,6 +94,11 @@ router.post("/", protect, async (req, res) => {
       type,
       date: normalizedDate || undefined,
       time: normalizedTime || undefined,
+      dayNames: normalizedDayNames,
+      notificationMinutesBefore: normalizedNotificationMinutes,
+      weeklyRecurrence: type === "daily" ? Boolean(weeklyRecurrence) : false,
+      customRepeatRules:
+        type === "daily" ? sanitizeText(customRepeatRules).slice(0, 500) : "",
       reminder: type === "daily" ? Boolean(reminder) : false,
       reminderTime: normalizedReminderTime || undefined,
     });

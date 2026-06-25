@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import api from "../context/api";
 import ContestCard from "../components/ContestCard";
 
@@ -25,13 +25,9 @@ export default function ContestTracker() {
     return () => clearInterval(interval);
   }, []);
 
-  useEffect(() => {
-    fetchContests();
-  }, [selectedPlatform, sortOrder, favoritesOnly]);
-
   const nextContest = useMemo(() => contests[0] || null, [contests]);
 
-  const fetchContests = async () => {
+  const fetchContests = useCallback(async () => {
     setLoading(true);
     setError("");
 
@@ -51,7 +47,11 @@ export default function ContestTracker() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [favoritesOnly, selectedPlatform, sortOrder]);
+
+  useEffect(() => {
+    fetchContests();
+  }, [fetchContests]);
 
   const handleRefresh = async () => {
     setRefreshing(true);
@@ -106,6 +106,20 @@ export default function ContestTracker() {
       const response = await api.put(`/api/contests/${contest._id}/preference`, {
         isFavorite: contest.isFavorite,
         reminderOffsets,
+      });
+
+      updateContestLocally(response.data.contest);
+    });
+  };
+
+  const handleAddContestReminder = async (contest) => {
+    await withSavingState(contest._id, async () => {
+      const response = await api.put(`/api/contests/${contest._id}/preference`, {
+        isFavorite: true,
+        isScheduled: true,
+        reminderOffsets: contest.reminderOffsets?.length
+          ? contest.reminderOffsets
+          : [1440, 60, 15],
       });
 
       updateContestLocally(response.data.contest);
@@ -225,6 +239,7 @@ export default function ContestTracker() {
                 now={now}
                 onToggleFavorite={handleToggleFavorite}
                 onToggleReminder={handleToggleReminder}
+                onAddContestReminder={handleAddContestReminder}
                 saving={savingContestIds.includes(contest._id)}
               />
             ))}

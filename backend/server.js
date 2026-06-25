@@ -12,6 +12,8 @@ const notificationRoutes = require("./routes/notifications");
 const checklistRoutes = require("./routes/checklists");
 const statsRoutes = require("./routes/stats");
 const contestRoutes = require("./routes/contests");
+const quoteRoutes = require("./routes/quotes");
+const careerRoadmapRoutes = require("./routes/careerRoadmaps");
 const connectDB = require("./config/db");
 const { notFound, errorHandler } = require("./middleware/errorHandlers");
 const startContestJobs = require("./jobs/contestSyncJob");
@@ -82,6 +84,8 @@ app.use("/api/notifications", notificationRoutes);
 app.use("/api/checklists", checklistRoutes);
 app.use("/api/stats", statsRoutes);
 app.use("/api/contests", contestRoutes);
+app.use("/api/quotes", quoteRoutes);
+app.use("/api/career-roadmaps", careerRoadmapRoutes);
 
 app.use(notFound);
 app.use(errorHandler);

@@ -9,6 +9,10 @@ export default function AddTaskForm() {
   const [date, setDate] = useState("");
   const [hasTime, setHasTime] = useState(false);
   const [time, setTime] = useState("");
+  const [dayNames, setDayNames] = useState([]);
+  const [notificationMinutesBefore, setNotificationMinutesBefore] = useState(10);
+  const [weeklyRecurrence, setWeeklyRecurrence] = useState(true);
+  const [customRepeatRules, setCustomRepeatRules] = useState("");
   const [reminder, setReminder] = useState(false);
   const [reminderTime, setReminderTime] = useState("");
   const [error, setError] = useState("");
@@ -21,7 +25,11 @@ export default function AddTaskForm() {
       description,
       type,
       date: type === "scheduled" && hasDate ? date : undefined,
-      time: type === "scheduled" && hasTime ? time : undefined,
+      time: type === "scheduled" && hasTime ? time : type === "daily" ? time : undefined,
+      dayNames: type === "daily" ? dayNames : [],
+      notificationMinutesBefore,
+      weeklyRecurrence: type === "daily" ? weeklyRecurrence : false,
+      customRepeatRules: type === "daily" ? customRepeatRules : "",
       reminder: type === "daily" ? reminder : false,
       reminderTime: type === "daily" && reminder ? reminderTime : undefined,
     });
@@ -36,6 +44,10 @@ export default function AddTaskForm() {
     setDate("");
     setHasTime(false);
     setTime("");
+    setDayNames([]);
+    setNotificationMinutesBefore(10);
+    setWeeklyRecurrence(true);
+    setCustomRepeatRules("");
     setReminder(false);
     setReminderTime("");
   };
@@ -66,7 +78,16 @@ export default function AddTaskForm() {
       </label>
 
       {type === "daily" && (
-        <div className="task-options-row">
+        <div className="task-options-row habit-options">
+          <label className="task-option">
+            <span>Time</span>
+            <input
+              type="time"
+              value={time}
+              onChange={(event) => setTime(event.target.value)}
+            />
+          </label>
+
           <label className="task-option checkbox-option">
             <input
               type="checkbox"
@@ -83,6 +104,70 @@ export default function AddTaskForm() {
               value={reminderTime}
               onChange={(event) => setReminderTime(event.target.value)}
               disabled={!reminder}
+            />
+          </label>
+
+          <label className="task-option">
+            <span>Notify before event</span>
+            <select
+              value={notificationMinutesBefore}
+              onChange={(event) => setNotificationMinutesBefore(Number(event.target.value))}
+            >
+              <option value={0}>At event time</option>
+              <option value={5}>5 minutes before</option>
+              <option value={10}>10 minutes before</option>
+              <option value={30}>30 minutes before</option>
+              <option value={60}>1 hour before</option>
+              <option value={1440}>1 day before</option>
+            </select>
+          </label>
+
+          <label className="task-option checkbox-option">
+            <input
+              type="checkbox"
+              checked={weeklyRecurrence}
+              onChange={(event) => setWeeklyRecurrence(event.target.checked)}
+            />
+            <span>Repeat weekly</span>
+          </label>
+
+          <label className="task-option full-width">
+            <span>Day names</span>
+            <div className="day-picker">
+              {[
+                "monday",
+                "tuesday",
+                "wednesday",
+                "thursday",
+                "friday",
+                "saturday",
+                "sunday",
+              ].map((day) => (
+                <button
+                  key={day}
+                  type="button"
+                  className={dayNames.includes(day) ? "day-chip is-active" : "day-chip"}
+                  onClick={() =>
+                    setDayNames((current) =>
+                      current.includes(day)
+                        ? current.filter((item) => item !== day)
+                        : [...current, day]
+                    )
+                  }
+                >
+                  {day.slice(0, 3)}
+                </button>
+              ))}
+            </div>
+          </label>
+
+          <label className="task-option full-width">
+            <span>Custom repeat rules</span>
+            <input
+              type="text"
+              placeholder="Example: first weekday, alternate Saturdays"
+              value={customRepeatRules}
+              onChange={(event) => setCustomRepeatRules(event.target.value)}
             />
           </label>
         </div>

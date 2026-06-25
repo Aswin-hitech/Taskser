@@ -1,6 +1,7 @@
 import { useContext, useEffect, useMemo, useState } from "react";
 import { TaskContext } from "../context/TaskContext";
 import { NoteContext } from "../context/NoteContext";
+import api from "../context/api";
 import AddTaskForm from "../components/AddTaskForm";
 import TaskCard from "../components/TaskCard";
 import ProgressMeter from "../components/ProgressMeter";
@@ -23,6 +24,7 @@ export default function Dashboard() {
   const [localTasks, setLocalTasks] = useState([]);
   const [dragIndex, setDragIndex] = useState(null);
   const [notificationEnabled, setNotificationEnabled] = useState(false);
+  const [dailyQuote, setDailyQuote] = useState(null);
 
   useEffect(() => {
     setLocalTasks(tasks);
@@ -30,6 +32,13 @@ export default function Dashboard() {
 
   useEffect(() => {
     requestNotificationPermission().then(setNotificationEnabled);
+  }, []);
+
+  useEffect(() => {
+    api
+      .get("/api/quotes/daily")
+      .then((response) => setDailyQuote(response.data.quote))
+      .catch(() => setDailyQuote(null));
   }, []);
 
   useEffect(() => {
@@ -100,6 +109,24 @@ export default function Dashboard() {
           <p>Browser reminders are off right now. You can still manage tasks here, but reminders will stay quiet until permission is enabled.</p>
         </div>
       )}
+
+      {dailyQuote ? (
+        <section className="section daily-quote">
+          <div className="quote-emoji" aria-hidden="true">
+            {dailyQuote.category === "success"
+              ? "🏆"
+              : dailyQuote.category === "learning"
+                ? "📚"
+                : dailyQuote.category === "dreams"
+                  ? "🚀"
+                  : "✨"}
+          </div>
+          <div>
+            <p className="quote-text">"{dailyQuote.quote}"</p>
+            <p className="quote-author">- {dailyQuote.author}</p>
+          </div>
+        </section>
+      ) : null}
 
       <ProgressMeter percentage={percentage} />
       <AddTaskForm />

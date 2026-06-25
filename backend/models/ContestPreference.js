@@ -18,6 +18,10 @@ const contestPreferenceSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    isScheduled: {
+      type: Boolean,
+      default: false,
+    },
     reminderOffsets: {
       type: [Number],
       default: [],

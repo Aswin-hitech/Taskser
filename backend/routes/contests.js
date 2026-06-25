@@ -57,6 +57,7 @@ router.put("/:id/preference", protect, async (req, res) => {
       userId: req.userId,
       contestId: req.params.id,
       isFavorite: req.body?.isFavorite,
+      isScheduled: req.body?.isScheduled,
       reminderOffsets: req.body?.reminderOffsets,
     });
 

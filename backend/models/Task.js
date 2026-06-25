@@ -12,7 +12,26 @@ const taskSchema = new mongoose.Schema({
   },
 
   date: Date,
-  time: String,  
+  time: String,
+  dayNames: {
+    type: [String],
+    default: [],
+  },
+  notificationMinutesBefore: {
+    type: Number,
+    default: 0,
+    min: 0,
+  },
+  weeklyRecurrence: {
+    type: Boolean,
+    default: false,
+  },
+  customRepeatRules: {
+    type: String,
+    default: "",
+    trim: true,
+    maxlength: 500,
+  },
 
   habitLogs: {
     type: [String],

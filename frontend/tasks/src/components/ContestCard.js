@@ -53,6 +53,7 @@ export default function ContestCard({
   now,
   onToggleFavorite,
   onToggleReminder,
+  onAddContestReminder,
   saving,
 }) {
   return (
@@ -108,6 +109,15 @@ export default function ContestCard({
           );
         })}
       </div>
+
+      <button
+        type="button"
+        className={contest.isScheduled ? "contest-schedule-btn is-active" : "contest-schedule-btn"}
+        onClick={() => onAddContestReminder(contest)}
+        disabled={saving}
+      >
+        {contest.isScheduled ? "Saved to reminders" : "Add Contest & Remind Me"}
+      </button>
 
       <a
         className="contest-link"

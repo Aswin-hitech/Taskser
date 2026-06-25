@@ -57,6 +57,16 @@ export default function TaskCard({
 
       {isDaily ? (
         <>
+          <div className="habit-meta">
+            {task.dayNames?.length ? <span>{task.dayNames.join(", ")}</span> : null}
+            {task.time ? <span>{task.time}</span> : null}
+            {task.notificationMinutesBefore ? (
+              <span>{task.notificationMinutesBefore} min before</span>
+            ) : null}
+            {task.weeklyRecurrence ? <span>Weekly</span> : null}
+            {task.customRepeatRules ? <span>{task.customRepeatRules}</span> : null}
+          </div>
+
           <HabitGrid logs={logs} />
 
           <small className="streak-text">{streak} day streak</small>
